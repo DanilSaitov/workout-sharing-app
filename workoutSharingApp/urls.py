@@ -21,4 +21,8 @@ from main import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name='index'),
+    path('message/', views.message, name='message'),
+    path('browse/', views.browse, name='Browse'),
+    path('calendar/', views.calendar, name='Calendar'),
+    path('settings/', views.settings, name='settings'),
 ]
