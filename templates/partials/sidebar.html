@@ -1,7 +1,68 @@
-<ul>
-    <li><a href="{% url 'index' %}">Home</a></li>
-    <li><a href="{% url 'message' %}">Messages</a></li>
-    <li><a href="{% url 'Browse' %}">Browse</a></li>
-    <li><a href="{% url 'Calendar' %}">Calendar</a></li>
-    <li><a href="{% url 'settings' %}">settings</a></li>
-</ul>
+{% if user.is_authenticated %}
+    <div class="text-center mb-4">
+        {% if user.profile_picture %}
+            <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="profile-picture" style="width: 60px; height: 60px;">
+        {% else %}
+            <div class="profile-circle mx-auto" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                {{ user.username.0|upper }}
+            </div>
+        {% endif %}
+        <div class="mt-2 fw-semibold">{{ user.username }}</div>
+    </div>
+
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a href="{% url 'index' %}" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'message' %}" class="nav-link {% if 'message' in request.path %}active{% endif %}">
+                <i class="bi bi-chat"></i> Messages
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'Browse' %}" class="nav-link {% if 'browse' in request.path %}active{% endif %}">
+                <i class="bi bi-search"></i> Browse
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'Calendar' %}" class="nav-link {% if 'calendar' in request.path %}active{% endif %}">
+                <i class="bi bi-calendar"></i> Calendar
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'settings' %}" class="nav-link {% if 'settings' in request.path %}active{% endif %}">
+                <i class="bi bi-gear"></i> Settings
+            </a>
+        </li>
+    </ul>
+
+    <div class="mt-auto text-center" style="position: absolute; bottom: 20px; width: 100%; padding: 0 20px;">
+        <a href="{% url 'logout' %}" class="btn btn-outline-danger w-100">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+    </div>
+{% else %}
+    <div class="text-center mb-4">
+        <div class="profile-circle mx-auto" style="width: 60px; height: 60px; font-size: 1.5rem;">
+            <i class="bi bi-person"></i>
+        </div>
+        <div class="mt-2">
+            <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+        </div>
+    </div>
+
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a href="{% url 'index' %}" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'Browse' %}" class="nav-link {% if 'browse' in request.path %}active{% endif %}">
+                <i class="bi bi-search"></i> Browse
+            </a>
+        </li>
+    </ul>
+{% endif %}
