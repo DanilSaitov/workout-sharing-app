@@ -4,10 +4,10 @@
             <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="profile-picture" style="width: 60px; height: 60px;">
         {% else %}
             <div class="profile-circle mx-auto" style="width: 60px; height: 60px; font-size: 1.5rem;">
-                {{ user.username.0|upper }}
+                <a href="{% url 'profile' user.username %}">{{ user.username.0|upper }}</a>
             </div>
         {% endif %}
-        <div class="mt-2 fw-semibold">{{ user.username }}</div>
+        <div class="mt-2 fw-semibold"><a href="{% url 'profile' user.username %}">@{{ user.username }}</a></div>
     </div>
 
     <ul class="nav flex-column">
