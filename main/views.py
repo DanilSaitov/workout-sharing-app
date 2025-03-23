@@ -24,6 +24,11 @@ def browse(request):
 def calendar(request):
     return render(request, 'calendar.html')
 
+def profile(request, username):
+    user = User.objects.get(username=username)
+    context = {'user': user}
+    return render(request, 'profile.html', context)
+
 @login_required(login_url='login')
 def settings(request):
     return render(request, 'settings.html')
