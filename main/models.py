@@ -27,7 +27,7 @@ class User(AbstractUser):
     )
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['username']  # Username is required for AbstractUser
 
     class Meta:
         app_label = 'main'
