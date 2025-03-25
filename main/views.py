@@ -52,7 +52,7 @@ def profile(request, username):
         ).exists()
     
     context = {
-        'user': profile_user,
+        'profile_user': profile_user,
         'is_friend': is_friend,
         'friend_request_sent': friend_request_sent,
         'friend_request_received': friend_request_received,
