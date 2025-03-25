@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> {{ user.name.0|upper }} - Workout Sharing App</title>
+    <title> {{ profile_user.name.0|upper }} - Workout Sharing App</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .left-column {
@@ -52,6 +52,22 @@
             background-color: #f0f0f0;
             min-height: 66.67vh;
         }
+        .friend-buttons {
+            margin-top: 20px;
+            padding: 0 15px;
+        }
+        .profile-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .message-btn {
+            margin-top: 10px;
+        }
+        .alert {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -64,14 +80,65 @@
 
             <!-- Center Column (3 parts) -->
             <div class="col-7 center-column">
-                <h4 class="p-3">@{{user.username}}</h4>
-                <!-- Add settings-specific content here -->
+                <h4 class="p-3">@{{profile_user.username}}</h4>
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <!-- Friend System UI -->
+                {% if profile_user != request.user and request.user.is_authenticated %}
+                    <div class="profile-actions p-3">
+                        {% if is_friend %}
+                            <a href="{% url 'conversation' username=profile_user.username %}" class="btn btn-primary message-btn">
+                                <i class="bi bi-chat-dots"></i> Message
+                            </a>
+                            <a href="{% url 'unfriend' username=profile_user.username %}" class="btn btn-outline-danger">
+                                <i class="bi bi-person-dash"></i> Unfriend
+                            </a>
+                        {% elif friend_request_sent %}
+                            <button class="btn btn-secondary" disabled>Friend Request Sent</button>
+                        {% elif friend_request_received %}
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'accept_friend_request' username=profile_user.username %}" class="btn btn-success">
+                                    Accept Friend Request
+                                </a>
+                                <a href="{% url 'reject_friend_request' username=profile_user.username %}" class="btn btn-outline-danger">
+                                    Reject
+                                </a>
+                            </div>
+                        {% else %}
+                            <a href="{% url 'send_friend_request' username=profile_user.username %}" class="btn btn-primary">
+                                <i class="bi bi-person-plus"></i> Add Friend
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                
+                <!-- Add other profile content here -->
             </div>
 
             <!-- Right Column (1 part, split vertically 1:2) -->
             <div class="col-3 right-column">
                 <div class="right-top">
                     <h4 class="p-3">Profile Info</h4>
+                    <div class="p-3">
+                        {% if profile_user.profile_picture %}
+                            <img src="{{ profile_user.profile_picture.url }}" alt="Profile Picture" class="img-thumbnail mb-3" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;">
+                        {% else %}
+                            <div style="width: 100px; height: 100px; background-color: #007bff; color: white; display: flex; align-items: center; justify-content: center; font-size: 40px; border-radius: 50%;">
+                                {{ profile_user.username.0|upper }}
+                            </div>
+                        {% endif %}
+                        <p><strong>Username:</strong> {{ profile_user.username }}</p>
+                        {% if profile_user.bio %}
+                            <p><strong>Bio:</strong> {{ profile_user.bio }}</p>
+                        {% endif %}
+                    </div>
                 </div>
                 <div class="right-bottom">
                     <h4 class="p-3">Account Status</h4>
