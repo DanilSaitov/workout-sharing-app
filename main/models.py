@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.conf import settings
 
 # Create your models here.
 
@@ -32,3 +33,16 @@ class User(AbstractUser):
     class Meta:
         app_label = 'main'
         db_table = 'main_user'
+
+
+# Workout Request Model here
+class WorkoutRequest(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="workout_requests")
+    date = models.DateField()
+    time = models.TimeField()
+    body_part = models.CharField(max_length=100)
+    experience_level = models.CharField(max_length=50, choices=[('Beginner', 'Beginner'), ('Intermediate', 'Intermediate'), ('Advanced', 'Advanced')])
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.body_part} on {self.date} at {self.time}"

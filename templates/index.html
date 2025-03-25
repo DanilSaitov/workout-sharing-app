@@ -64,7 +64,22 @@
 
             <!-- Center Column (3 parts) -->
             <div class="col-7 center-column">
-                <h4 class="p-3">Center Section</h4>
+                <h4 class="p-3">Workout Requests</h4>
+                <a href="{% url 'create_workout_request' %}" class="btn btn-success mb-3">Create Workout Request</a>
+                
+                {% for request in workout_requests %}
+                    <div class="workout-request mb-3 p-3 border rounded">
+                        <h5 class="mb-1">{{ request.user.username }}</h5>
+                        <p class="mb-1">
+                            <strong>Body Part:</strong> {{ request.body_part }}<br>
+                            <strong>Date:</strong> {{ request.date }}<br>
+                            <strong>Time:</strong> {{ request.time }}<br>
+                            <strong>Experience Level:</strong> {{ request.experience_level }}
+                        </p>
+                    </div>
+                {% empty %}
+                    <p>No workout requests available.</p>
+                {% endfor %}
             </div>
 
             <!-- Right Column (1 part, split vertically 1:2) -->
