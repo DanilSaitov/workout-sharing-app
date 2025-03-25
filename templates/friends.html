@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friends - Workout Sharing App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .left-column {
+            background-color: #f0f0f0;
+            min-height: 100vh;
+            border-right: 2px solid #ddd;
+            padding: 20px 0;
+        }
+        .left-column ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .left-column li {
+            padding: 10px 20px;
+            transition: background-color 0.2s;
+        }
+        .left-column li:hover {
+            background-color: #e0e0e0;
+        }
+        .left-column a {
+            color: #333;
+            text-decoration: none;
+            display: block;
+            font-size: 1.1em;
+        }
+        .left-column a:hover {
+            color: #007bff;
+        }
+        .center-column {
+            background-color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .friend-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+            display: flex;
+            align-items: center;
+        }
+        .friend-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #007bff;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .friend-avatar img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .friend-info {
+            flex-grow: 1;
+        }
+        .friend-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .section-title {
+            margin-top: 30px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Left Column (1 part) -->
+            <div class="col-2 left-column">
+                {% include 'partials/sidebar.html' %}
+            </div>
+
+            <!-- Center Column -->
+            <div class="col-10 center-column">
+                <h2>Friends</h2>
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <!-- Friend Requests Section -->
+                {% if friend_requests %}
+                    <h4 class="section-title">Friend Requests</h4>
+                    <div class="row">
+                        {% for request in friend_requests %}
+                            <div class="col-md-6">
+                                <div class="friend-card">
+                                    {% if request.from_user.profile_picture %}
+                                        <div class="friend-avatar">
+                                            <img src="{{ request.from_user.profile_picture.url }}" alt="{{ request.from_user.username }}">
+                                        </div>
+                                    {% else %}
+                                        <div class="friend-avatar">
+                                            {{ request.from_user.username.0|upper }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="friend-info">
+                                        <h5><a href="{% url 'profile' username=request.from_user.username %}">@{{ request.from_user.username }}</a></h5>
+                                    </div>
+                                    <div class="friend-actions">
+                                        <a href="{% url 'accept_friend_request' username=request.from_user.username %}" class="btn btn-success btn-sm">
+                                            <i class="bi bi-check-lg"></i> Accept
+                                        </a>
+                                        <a href="{% url 'reject_friend_request' username=request.from_user.username %}" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-x-lg"></i> Reject
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <!-- Friends List Section -->
+                <h4 class="section-title">My Friends</h4>
+                {% if friends %}
+                    <div class="row">
+                        {% for friend in friends %}
+                            <div class="col-md-6">
+                                <div class="friend-card">
+                                    {% if friend.profile_picture %}
+                                        <div class="friend-avatar">
+                                            <img src="{{ friend.profile_picture.url }}" alt="{{ friend.username }}">
+                                        </div>
+                                    {% else %}
+                                        <div class="friend-avatar">
+                                            {{ friend.username.0|upper }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="friend-info">
+                                        <h5><a href="{% url 'profile' username=friend.username %}">@{{ friend.username }}</a></h5>
+                                    </div>
+                                    <div class="friend-actions">
+                                        <a href="{% url 'conversation' username=friend.username %}" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-chat-dots"></i> Message
+                                        </a>
+                                        <a href="{% url 'unfriend' username=friend.username %}" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-person-dash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>You don't have any friends yet. Browse profiles and send friend requests to connect with others!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -32,5 +32,16 @@ urlpatterns = [
     path('register/', views.registerPage, name='register'),
     path('profile/<str:username>/', views.profile, name='profile'),
     path('workout-request/create/', views.create_workout_request, name='create_workout_request'),
-    path('', views.list_workout_requests, name='index')
+    path('', views.list_workout_requests, name='index'),
+    
+    # Friend system URLs
+    path('friends/', views.friend_list, name='friend_list'),
+    path('friend-request/send/<str:username>/', views.send_friend_request, name='send_friend_request'),
+    path('friend-request/accept/<str:username>/', views.accept_friend_request, name='accept_friend_request'),
+    path('friend-request/reject/<str:username>/', views.reject_friend_request, name='reject_friend_request'),
+    path('unfriend/<str:username>/', views.unfriend, name='unfriend'),
+    
+    # Messaging URLs
+    path('inbox/', views.inbox, name='inbox'),
+    path('conversation/<str:username>/', views.conversation, name='conversation'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

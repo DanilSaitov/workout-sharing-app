@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversation with {{ partner.username }} - Workout Sharing App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .left-column {
+            background-color: #f0f0f0;
+            min-height: 100vh;
+            border-right: 2px solid #ddd;
+            padding: 20px 0;
+        }
+        .left-column ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .left-column li {
+            padding: 10px 20px;
+            transition: background-color 0.2s;
+        }
+        .left-column li:hover {
+            background-color: #e0e0e0;
+        }
+        .left-column a {
+            color: #333;
+            text-decoration: none;
+            display: block;
+            font-size: 1.1em;
+        }
+        .left-column a:hover {
+            color: #007bff;
+        }
+        .main-content {
+            background-color: #ffffff;
+            min-height: 100vh;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .conversation-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+            background-color: #f8f8f8;
+            display: flex;
+            align-items: center;
+        }
+        .conversation-header h4 {
+            margin: 0;
+            margin-left: 15px;
+        }
+        .conversation-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #007bff;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .conversation-avatar img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .message-container {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: calc(100vh - 180px);
+        }
+        .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            position: relative;
+        }
+        .message-sent {
+            align-self: flex-end;
+            background-color: #007bff;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        .message-received {
+            align-self: flex-start;
+            background-color: #f1f1f1;
+            color: #333;
+            border-bottom-left-radius: 5px;
+        }
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.8;
+            margin-top: 5px;
+            text-align: right;
+        }
+        .message-input-container {
+            padding: 15px;
+            border-top: 1px solid #ddd;
+            background-color: #f8f8f8;
+        }
+        .message-form {
+            display: flex;
+            gap: 10px;
+        }
+        .message-input {
+            flex-grow: 1;
+            border-radius: 20px;
+            padding: 10px 15px;
+        }
+        .back-button {
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+        .back-button:hover {
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Left Column (1 part) -->
+            <div class="col-2 left-column">
+                {% include 'partials/sidebar.html' %}
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-10 main-content">
+                <div class="conversation-header">
+                    <a href="{% url 'inbox' %}" class="back-button">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                    <div class="d-flex align-items-center ms-3">
+                        {% if partner.profile_picture %}
+                            <div class="conversation-avatar">
+                                <img src="{{ partner.profile_picture.url }}" alt="{{ partner.username }}">
+                            </div>
+                        {% else %}
+                            <div class="conversation-avatar">
+                                {{ partner.username.0|upper }}
+                            </div>
+                        {% endif %}
+                        <h4 class="ms-2">{{ partner.username }}</h4>
+                    </div>
+                </div>
+                
+                <div class="message-container" id="messageContainer">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="message {% if message.sender == request.user %}message-sent{% else %}message-received{% endif %}">
+                                {{ message.content }}
+                                <div class="message-time">
+                                    {{ message.created_at|date:"M d, Y" }} at {{ message.created_at|time:"g:i A" }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted py-5">
+                            <p>No messages yet. Say hello!</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="message-input-container">
+                    <form method="post" class="message-form">
+                        {% csrf_token %}
+                        <input type="text" name="content" class="form-control message-input" placeholder="Type a message..." required>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Scroll to the bottom of messages
+            const messageContainer = document.getElementById('messageContainer');
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+        });
+    </script>
+</body>
+</html>
