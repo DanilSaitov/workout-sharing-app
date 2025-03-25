@@ -119,10 +119,24 @@ def registerPage(request):
             if 'profile_picture' in request.FILES:
                 user.profile_picture = request.FILES['profile_picture']
             user.save()
-            login(request, user)
-            return redirect('index')
+            
+            # Authenticate the user with the EmailBackend
+            authenticated_user = authenticate(
+                request, 
+                username=user.email, 
+                password=form.cleaned_data['password1']
+            )
+            
+            if authenticated_user is not None:
+                login(request, authenticated_user)
+                return redirect('index')
+            else:
+                messages.error(request, 'User created but unable to log in automatically. Please log in.')
+                return redirect('login')
         else:
-            messages.error(request, 'An error occurred during registration')
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
 
     return render(request, 'login_register.html', {'form': form})
 
