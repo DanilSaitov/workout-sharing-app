@@ -18,13 +18,35 @@ class CustomUserCreationForm(UserCreationForm):
 
 def index(request):
     workout_requests = WorkoutRequest.objects.all().order_by('-created_at')
+    
+    # Filter parameters
+    body_part = request.GET.get('body_part')
+    experience_level = request.GET.get('experience_level')
+    date = request.GET.get('date')
+    search_query = request.GET.get('search')
+    
+    # Apply filters if provided
+    if body_part and body_part != 'All':
+        workout_requests = workout_requests.filter(body_part=body_part)
+    
+    if experience_level and experience_level != 'All':
+        workout_requests = workout_requests.filter(experience_level=experience_level)
+    
+    if date:
+        workout_requests = workout_requests.filter(date=date)
+    
+    # Apply search query if provided
+    if search_query:
+        workout_requests = workout_requests.filter(
+            Q(user__username__icontains=search_query) |
+            Q(body_part__icontains=search_query) |
+            Q(experience_level__icontains=search_query)
+        )
+    
     return render(request, 'index.html', {'workout_requests': workout_requests})
 
 def message(request):
     return render(request, 'message.html')
-
-def browse(request):
-    return render(request, 'browse.html')
 
 def calendar(request):
     return render(request, 'calendar.html')
