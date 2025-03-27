@@ -1,229 +1,145 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workout Sharing App</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <style>
-        .left-column {
-            background-color: #f0f0f0;
-            min-height: 100vh;
-            border-right: 2px solid #ddd;
-            padding: 20px 0;
-        }
-        .left-column ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .left-column li {
-            padding: 10px 20px;
-            transition: background-color 0.2s;
-        }
-        .left-column li:hover {
-            background-color: #e0e0e0;
-        }
-        .left-column a {
-            color: #333;
-            text-decoration: none;
-            display: block;
-            font-size: 1.1em;
-        }
-        .left-column a:hover {
-            color: #007bff;
-        }
-        .center-column {
-            background-color: #ffffff;
-            min-height: 100vh;
-        }
-        .right-column {
-            background-color: #f8f8f8;
-            min-height: 100vh;
-            border-left: 2px solid #ddd;
-            padding: 0;
-        }
-        .right-top {
-            background-color: #e8e8e8;
-            min-height: 33.33vh;
-            border-bottom: 2px solid #ddd;
-        }
-        .right-bottom {
-            background-color: #f0f0f0;
-            min-height: 66.67vh;
-        }
-        .workout-request {
-            background-color: #f9f9f9;
-            border: 1px solid #ddd !important;
-            border-radius: 8px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: transform 0.2s;
-        }
-        .workout-request:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .profile-circle {
-            background-color: #007bff;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .filter-section {
-            background-color: #f5f5f5;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        .workout-card {
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: transform 0.2s;
-        }
-        .workout-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-    </style>
-</head>
-<body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Left Column (1 part) -->
-            <div class="col-2 left-column">
-                {% include 'partials/sidebar.html' %}
-            </div>
+{% extends 'main.html' %}
 
-            <!-- Center Column (3 parts) -->
-            <div class="col-7 center-column">
-                <h4 class="p-3"><i class="bi bi-grid"></i> Browse Workouts</h4>
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Left Column (1 part) -->
+        <div class="col-2 left-column">
+            {% include 'partials/sidebar.html' %}
+        </div>
+
+        <!-- Center Column (3 parts) -->
+        <div class="col-7 center-column">
+            <h4 class="p-3"><i class="bi bi-grid"></i> Browse Workouts</h4>
+            
+            <div class="p-3">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} mb-3">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
                 
-                <div class="p-3">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} mb-3">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                    
-                    <div class="filter-section mb-4">
-                        <h5 class="mb-3"><i class="bi bi-funnel"></i> Filter Workouts</h5>
-                        <form class="row g-3" method="GET">
-                            <div class="col-md-12 mb-2">
-                                <div class="input-group">
-                                    <input type="text" class="form-control" placeholder="Search by username, body part, experience..." name="search" value="{{ request.GET.search|default:'' }}">
-                                    <button class="btn btn-primary" type="submit">
-                                        <i class="bi bi-search"></i> Search
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label"><i class="bi bi-body-text"></i> Body Part</label>
-                                <select class="form-select" name="body_part">
-                                    <option value="All" {% if request.GET.body_part == "All" or not request.GET.body_part %}selected{% endif %}>All</option>
-                                    <option value="Arms" {% if request.GET.body_part == "Arms" %}selected{% endif %}>Arms</option>
-                                    <option value="Legs" {% if request.GET.body_part == "Legs" %}selected{% endif %}>Legs</option>
-                                    <option value="Chest" {% if request.GET.body_part == "Chest" %}selected{% endif %}>Chest</option>
-                                    <option value="Back" {% if request.GET.body_part == "Back" %}selected{% endif %}>Back</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label"><i class="bi bi-bar-chart"></i> Experience Level</label>
-                                <select class="form-select" name="experience_level">
-                                    <option value="All" {% if request.GET.experience_level == "All" or not request.GET.experience_level %}selected{% endif %}>All</option>
-                                    <option value="Beginner" {% if request.GET.experience_level == "Beginner" %}selected{% endif %}>Beginner</option>
-                                    <option value="Intermediate" {% if request.GET.experience_level == "Intermediate" %}selected{% endif %}>Intermediate</option>
-                                    <option value="Advanced" {% if request.GET.experience_level == "Advanced" %}selected{% endif %}>Advanced</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label"><i class="bi bi-calendar-date"></i> Date</label>
-                                <input type="date" class="form-control" name="date" value="{{ request.GET.date|default:'' }}">
-                            </div>
-                            <div class="col-12 mt-3">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-filter"></i> Apply Filters
+                <div class="filter-section mb-4">
+                    <h5 class="mb-3"><i class="bi bi-funnel"></i> Filter Workouts</h5>
+                    <form class="row g-3" method="GET">
+                        <div class="col-md-12 mb-2">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Search by username, body part, experience..." name="search" value="{{ request.GET.search|default:'' }}">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="bi bi-search"></i> Search
                                 </button>
-                                <a href="{% url 'index' %}" class="btn btn-outline-secondary">
-                                    <i class="bi bi-x-circle"></i> Reset
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label"><i class="bi bi-body-text"></i> Body Part</label>
+                            <select class="form-select" name="body_part">
+                                <option value="All" {% if request.GET.body_part == "All" or not request.GET.body_part %}selected{% endif %}>All</option>
+                                <option value="Arms" {% if request.GET.body_part == "Arms" %}selected{% endif %}>Arms</option>
+                                <option value="Legs" {% if request.GET.body_part == "Legs" %}selected{% endif %}>Legs</option>
+                                <option value="Chest" {% if request.GET.body_part == "Chest" %}selected{% endif %}>Chest</option>
+                                <option value="Back" {% if request.GET.body_part == "Back" %}selected{% endif %}>Back</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label"><i class="bi bi-bar-chart"></i> Experience Level</label>
+                            <select class="form-select" name="experience_level">
+                                <option value="All" {% if request.GET.experience_level == "All" or not request.GET.experience_level %}selected{% endif %}>All</option>
+                                <option value="Beginner" {% if request.GET.experience_level == "Beginner" %}selected{% endif %}>Beginner</option>
+                                <option value="Intermediate" {% if request.GET.experience_level == "Intermediate" %}selected{% endif %}>Intermediate</option>
+                                <option value="Advanced" {% if request.GET.experience_level == "Advanced" %}selected{% endif %}>Advanced</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label"><i class="bi bi-calendar-date"></i> Date</label>
+                            <input type="date" class="form-control" name="date" value="{{ request.GET.date|default:'' }}">
+                        </div>
+                        <div class="col-12 mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-filter"></i> Apply Filters
+                            </button>
+                            <a href="{% url 'index' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-3">
+                    <h5><i class="bi bi-list-check"></i> Available Workouts</h5>
+                    <a href="{% url 'create_workout_request' %}" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> Create Workout Request
+                    </a>
+                </div>
+                
+                {% for request in workout_requests %}
+                    <div class="workout-card">
+                        <div class="d-flex align-items-center mb-2">
+                            {% if request.user.profile_picture %}
+                                <img src="{{ request.user.profile_picture.url }}" alt="{{ request.user.username }}" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                            {% else %}
+                                <div class="profile-circle me-2" style="width: 40px; height: 40px; font-size: 1.2rem;">
+                                    {{ request.user.username.0|upper }}
+                                </div>
+                            {% endif %}
+                            <h5 class="mb-0">
+                                <a href="{% url 'profile' username=request.user.username %}" class="text-decoration-none">
+                                    {{ request.user.username }}
                                 </a>
-                            </div>
-                        </form>
-                    </div>
-                    
-                    <div class="d-flex justify-content-between mb-3">
-                        <h5><i class="bi bi-list-check"></i> Available Workouts</h5>
-                        <a href="{% url 'create_workout_request' %}" class="btn btn-success">
-                            <i class="bi bi-plus-circle"></i> Create Workout Request
-                        </a>
-                    </div>
-                    
-                    {% for request in workout_requests %}
-                        <div class="workout-card">
-                            <div class="d-flex align-items-center mb-2">
-                                {% if request.user.profile_picture %}
-                                    <img src="{{ request.user.profile_picture.url }}" alt="{{ request.user.username }}" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
-                                {% else %}
-                                    <div class="profile-circle me-2" style="width: 40px; height: 40px; font-size: 1.2rem;">
-                                        {{ request.user.username.0|upper }}
-                                    </div>
-                                {% endif %}
-                                <h5 class="mb-0">
-                                    <a href="{% url 'profile' username=request.user.username %}" class="text-decoration-none">
-                                        {{ request.user.username }}
-                                    </a>
-                                </h5>
-                            </div>
-                            <p class="mb-1">
-                                <i class="bi bi-body-text me-1"></i> <strong>Body Part:</strong> {{ request.body_part }}<br>
-                                <i class="bi bi-calendar-date me-1"></i> <strong>Date:</strong> {{ request.date }}<br>
-                                <i class="bi bi-clock me-1"></i> <strong>Time:</strong> {{ request.time }}<br>
-                                <i class="bi bi-star me-1"></i> <strong>Experience Level:</strong> {{ request.experience_level }}
-                            </p>
-                            <div class="d-flex mt-3">
+                            </h5>
+                        </div>
+                        <p class="mb-1">
+                            <i class="bi bi-body-text me-1"></i> <strong>Body Part:</strong> {{ request.body_part }}<br>
+                            <i class="bi bi-calendar-date me-1"></i> <strong>Date:</strong> {{ request.date }}<br>
+                            <i class="bi bi-clock me-1"></i> <strong>Time:</strong> {{ request.time }}<br>
+                            <i class="bi bi-star me-1"></i> <strong>Experience Level:</strong> {{ request.experience_level }}
+                        </p>
+                        <div class="d-flex mt-3">
+                            {% if request.user == user %}
+                                <!-- Edit and Delete buttons (only visible to the workout request owner) -->
+                                <a href="{% url 'edit_workout_request' workout_id=request.id %}" class="btn btn-sm btn-warning me-2">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <a href="{% url 'delete_workout_request' workout_id=request.id %}" class="btn btn-sm btn-danger me-2">
+                                    <i class="bi bi-trash"></i> Delete
+                                </a>
+                            {% else %}
+                                <!-- Contact button (only visible to other users) -->
                                 <a href="{% url 'conversation' username=request.user.username %}" class="btn btn-sm btn-primary me-2">
                                     <i class="bi bi-chat"></i> Contact
                                 </a>
-                                <button class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-info-circle"></i> Details
-                                </button>
-                            </div>
+                            {% endif %}
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-info-circle"></i> Details
+                            </button>
                         </div>
-                    {% empty %}
-                        <div class="text-center py-5">
-                            <i class="bi bi-calendar2-x" style="font-size: 3rem; color: #ccc;"></i>
-                            <p class="mt-3">No workout requests available.</p>
-                            <a href="{% url 'create_workout_request' %}" class="btn btn-primary mt-2">Create your first request</a>
-                        </div>
-                    {% endfor %}
+                    </div>
+                {% empty %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-calendar2-x" style="font-size: 3rem; color: #ccc;"></i>
+                        <p class="mt-3">No workout requests available.</p>
+                        <a href="{% url 'create_workout_request' %}" class="btn btn-primary mt-2">Create your first request</a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Right Column (1 part, split vertically 1:2) -->
+        <div class="col-3 right-column">
+            <div class="right-top">
+                <h4 class="p-3"><i class="bi bi-info-circle"></i> Recent Activity</h4>
+                <div class="p-3">
+                    <p>Stay updated with recent activity from your friends.</p>
                 </div>
             </div>
-
-            <!-- Right Column (1 part, split vertically 1:2) -->
-            <div class="col-3 right-column">
-                <div class="right-top">
-                    <h4 class="p-3"><i class="bi bi-info-circle"></i> Recent Activity</h4>
-                    <div class="p-3">
-                        <p>Stay updated with recent activity from your friends.</p>
-                    </div>
-                </div>
-                <div class="right-bottom">
-                    <h4 class="p-3"><i class="bi bi-graph-up"></i> Your Stats</h4>
-                    <div class="p-3">
-                        <p>Track your workout progress and achievements.</p>
-                    </div>
+            <div class="right-bottom">
+                <h4 class="p-3"><i class="bi bi-graph-up"></i> Your Stats</h4>
+                <div class="p-3">
+                    <p>Track your workout progress and achievements.</p>
                 </div>
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}

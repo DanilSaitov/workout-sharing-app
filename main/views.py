@@ -162,7 +162,6 @@ def registerPage(request):
 
     return render(request, 'login_register.html', {'form': form})
 
-
 # CRUD operations for WorkoutRequest model
 @login_required(login_url='login')
 def create_workout_request(request):
@@ -175,6 +174,42 @@ def create_workout_request(request):
             workout_request.save()
             return redirect('index')
     return render(request, 'workout_request_form.html', {'form': form})
+
+@login_required(login_url='login')
+def edit_workout_request(request, workout_id):
+    workout_request = get_object_or_404(WorkoutRequest, id=workout_id)
+    
+    # Check if the user is the owner of the workout request
+    if request.user != workout_request.user:
+        messages.error(request, "You can only edit your own workout requests.")
+        return redirect('index')
+    
+    if request.method == 'POST':
+        form = WorkoutRequestForm(request.POST, instance=workout_request)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Workout request updated successfully.")
+            return redirect('index')
+    else:
+        form = WorkoutRequestForm(instance=workout_request)
+    
+    return render(request, 'workout_request_form.html', {'form': form, 'editing': True})
+
+@login_required(login_url='login')
+def delete_workout_request(request, workout_id):
+    workout_request = get_object_or_404(WorkoutRequest, id=workout_id)
+    
+    # Check if the user is the owner of the workout request
+    if request.user != workout_request.user:
+        messages.error(request, "You can only delete your own workout requests.")
+        return redirect('index')
+    
+    if request.method == 'POST':
+        workout_request.delete()
+        messages.success(request, "Workout request deleted successfully.")
+        return redirect('index')
+    
+    return render(request, 'confirm_delete.html', {'workout_request': workout_request})
 
 def list_workout_requests(request):
     workout_requests = WorkoutRequest.objects.all().order_by('-created_at')

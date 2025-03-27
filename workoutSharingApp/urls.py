@@ -31,6 +31,8 @@ urlpatterns = [
     path('register/', views.registerPage, name='register'),
     path('profile/<str:username>/', views.profile, name='profile'),
     path('workout-request/create/', views.create_workout_request, name='create_workout_request'),
+    path('workout-request/edit/<int:workout_id>/', views.edit_workout_request, name='edit_workout_request'),
+    path('workout-request/delete/<int:workout_id>/', views.delete_workout_request, name='delete_workout_request'),
     # Friend system URLs
     path('friends/', views.friend_list, name='friend_list'),
     path('friend-request/send/<str:username>/', views.send_friend_request, name='send_friend_request'),
