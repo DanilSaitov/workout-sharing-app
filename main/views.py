@@ -57,6 +57,14 @@ def profile(request, username):
     friend_request_sent = False
     friend_request_received = False
     
+    # Handle bio update form submission
+    if request.method == 'POST' and request.user.is_authenticated and request.user == profile_user:
+        if 'bio' in request.POST:
+            profile_user.bio = request.POST.get('bio')
+            profile_user.save()
+            messages.success(request, "Bio updated successfully!")
+            return redirect('profile', username=username)
+    
     if request.user.is_authenticated:
         # Check if the users are friends
         is_friend = Friendship.objects.filter(
@@ -73,11 +81,24 @@ def profile(request, username):
             from_user=profile_user, to_user=request.user
         ).exists()
     
+    # Get friends for the profile_user
+    friends = []
+    friendships = Friendship.objects.filter(
+        Q(user1=profile_user) | Q(user2=profile_user)
+    )
+    
+    for friendship in friendships:
+        if friendship.user1 == profile_user:
+            friends.append(friendship.user2)
+        else:
+            friends.append(friendship.user1)
+    
     context = {
         'profile_user': profile_user,
         'is_friend': is_friend,
         'friend_request_sent': friend_request_sent,
         'friend_request_received': friend_request_received,
+        'friends': friends,
     }
     return render(request, 'profile.html', context)
 

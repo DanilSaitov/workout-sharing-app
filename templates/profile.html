@@ -77,6 +77,72 @@
             align-items: center;
             justify-content: center;
         }
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .profile-image {
+            margin-right: 20px;
+        }
+        .profile-info {
+            flex-grow: 1;
+        }
+        .profile-stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background-color: #f8f8f8;
+        }
+        .bio-section {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .bio-text {
+            padding: 10px 0;
+            white-space: pre-line;
+        }
+        .edit-bio-btn {
+            float: right;
+            font-size: 0.9rem;
+        }
+        .friend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .friend-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .friend-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 5px;
+        }
+        .friend-name {
+            font-size: 0.8rem;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .edit-bio-form {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -89,8 +155,6 @@
 
             <!-- Center Column (3 parts) -->
             <div class="col-7 center-column">
-                <h4 class="p-3">@{{profile_user.username}}</h4>
-                
                 {% if messages %}
                     {% for message in messages %}
                         <div class="alert alert-{{ message.tags }}">
@@ -99,63 +163,179 @@
                     {% endfor %}
                 {% endif %}
                 
-                <!-- Friend System UI -->
-                {% if profile_user != request.user and request.user.is_authenticated %}
-                    <div class="profile-actions p-3">
-                        {% if is_friend %}
-                            <a href="{% url 'conversation' username=profile_user.username %}" class="btn btn-primary message-btn">
-                                <i class="bi bi-chat-dots"></i> Message
-                            </a>
-                            <a href="{% url 'unfriend' username=profile_user.username %}" class="btn btn-outline-danger">
-                                <i class="bi bi-person-dash"></i> Unfriend
-                            </a>
-                        {% elif friend_request_sent %}
-                            <button class="btn btn-secondary" disabled>Friend Request Sent</button>
-                        {% elif friend_request_received %}
-                            <div class="d-flex gap-2">
-                                <a href="{% url 'accept_friend_request' username=profile_user.username %}" class="btn btn-success">
-                                    Accept Friend Request
-                                </a>
-                                <a href="{% url 'reject_friend_request' username=profile_user.username %}" class="btn btn-outline-danger">
-                                    Reject
-                                </a>
-                            </div>
-                        {% else %}
-                            <a href="{% url 'send_friend_request' username=profile_user.username %}" class="btn btn-primary">
-                                <i class="bi bi-person-plus"></i> Add Friend
-                            </a>
-                        {% endif %}
-                    </div>
-                {% endif %}
-                
-                <!-- Add other profile content here -->
-            </div>
-
-            <!-- Right Column (1 part, split vertically 1:2) -->
-            <div class="col-3 right-column">
-                <div class="right-top">
-                    <h4 class="p-3">Profile Info</h4>
-                    <div class="p-3">
+                <!-- Profile Header Section -->
+                <div class="profile-header">
+                    <div class="profile-image">
                         {% if profile_user.profile_picture %}
-                            <img src="{{ profile_user.profile_picture.url }}" alt="Profile Picture" class="img-thumbnail mb-3" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;">
+                            <img src="{{ profile_user.profile_picture.url }}" alt="Profile Picture" class="img-thumbnail" style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%;">
                         {% else %}
-                            <div class="profile-circle" style="width: 100px; height: 100px; font-size: 40px;">
+                            <div class="profile-circle" style="width: 120px; height: 120px; font-size: 50px;">
                                 {{ profile_user.username.0|upper }}
                             </div>
                         {% endif %}
-                        <p><strong>Username:</strong> {{ profile_user.username }}</p>
+                    </div>
+                    <div class="profile-info">
+                        <h3>@{{ profile_user.username }}</h3>
+                        
+                        <!-- Friend System UI -->
+                        {% if profile_user != request.user and request.user.is_authenticated %}
+                            <div class="d-flex gap-2 mt-2">
+                                {% if is_friend %}
+                                    <a href="{% url 'conversation' username=profile_user.username %}" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-chat-dots"></i> Message
+                                    </a>
+                                    <a href="{% url 'unfriend' username=profile_user.username %}" class="btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-person-dash"></i> Unfriend
+                                    </a>
+                                {% elif friend_request_sent %}
+                                    <button class="btn btn-secondary btn-sm" disabled>Friend Request Sent</button>
+                                {% elif friend_request_received %}
+                                    <a href="{% url 'accept_friend_request' username=profile_user.username %}" class="btn btn-success btn-sm">
+                                        Accept Friend Request
+                                    </a>
+                                    <a href="{% url 'reject_friend_request' username=profile_user.username %}" class="btn btn-outline-danger btn-sm">
+                                        Reject
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'send_friend_request' username=profile_user.username %}" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-person-plus"></i> Add Friend
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <div><strong>{{ workout_count|default:"0" }}</strong></div>
+                                <div class="small text-muted">Posts</div>
+                            </div>
+                            <div class="stat-item">
+                                <div><strong>{{ friends|length }}</strong></div>
+                                <div class="small text-muted">Friends</div>
+                            </div>
+                            <div class="stat-item">
+                                <div><strong>{{ profile_user.date_joined|date:"M Y" }}</strong></div>
+                                <div class="small text-muted">Joined</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bio Section -->
+                <div class="bio-section">
+                    <h5>
+                        About 
+                        {% if profile_user == request.user %}
+                            <button class="btn btn-sm btn-outline-secondary edit-bio-btn" onclick="toggleBioEdit()">
+                                <i class="bi bi-pencil"></i> Edit
+                            </button>
+                        {% endif %}
+                    </h5>
+                    
+                    <div id="bio-display" class="bio-text">
                         {% if profile_user.bio %}
-                            <p><strong>Bio:</strong> {{ profile_user.bio }}</p>
+                            {{ profile_user.bio }}
+                        {% else %}
+                            <p class="text-muted">No bio available.</p>
+                        {% endif %}
+                    </div>
+                    
+                    {% if profile_user == request.user %}
+                        <div id="bio-edit" class="edit-bio-form" style="display: none;">
+                            <form method="POST" action="{% url 'profile' profile_user.username %}">
+                                {% csrf_token %}
+                                <textarea name="bio" class="form-control" rows="4">{{ profile_user.bio }}</textarea>
+                                <div class="mt-2">
+                                    <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleBioEdit()">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Friends Section -->
+                <div class="p-3">
+                    <h5><i class="bi bi-people-fill"></i> Friends</h5>
+                    <div class="friend-grid">
+                        {% if friends %}
+                            {% for friend in friends %}
+                                <div class="friend-item">
+                                    <a href="{% url 'profile' friend.username %}">
+                                        {% if friend.profile_picture %}
+                                            <img src="{{ friend.profile_picture.url }}" alt="{{ friend.username }}" class="friend-avatar">
+                                        {% else %}
+                                            <div class="profile-circle" style="width: 60px; height: 60px; font-size: 24px;">
+                                                {{ friend.username.0|upper }}
+                                            </div>
+                                        {% endif %}
+                                        <div class="friend-name">@{{ friend.username }}</div>
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">No friends yet.</p>
                         {% endif %}
                     </div>
                 </div>
+                
+                <!-- Recent Activities/Posts Section -->
+                <div class="p-3">
+                    <h5><i class="bi bi-activity"></i> Recent Activity</h5>
+                    <!-- This can be populated with user's recent workout requests -->
+                    {% if workout_requests %}
+                        {% for request in workout_requests %}
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ request.body_part }} Workout</h6>
+                                    <p class="card-text">
+                                        <small class="text-muted">{{ request.date }} at {{ request.time }}</small><br>
+                                        Experience level: {{ request.experience_level }}
+                                    </p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No recent activity.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-3 right-column">
+                <div class="right-top">
+                    <h4 class="p-3">Account Info</h4>
+                    <div class="p-3">
+                        <p><strong>Username:</strong> {{ profile_user.username }}</p>
+                        <p><strong>Joined:</strong> {{ profile_user.date_joined|date:"F d, Y" }}</p>
+                        <p><strong>Last Login:</strong> {{ profile_user.last_login|date:"F d, Y" }}</p>
+                    </div>
+                </div>
                 <div class="right-bottom">
-                    <h4 class="p-3">Account Status</h4>
+                    <h4 class="p-3">Activity Summary</h4>
+                    <div class="p-3">
+                        <p><strong>Workout Posts:</strong> {{ workout_count|default:"0" }}</p>
+                        <p><strong>Friends:</strong> {{ friends|length }}</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleBioEdit() {
+            const bioDisplay = document.getElementById('bio-display');
+            const bioEdit = document.getElementById('bio-edit');
+            
+            if (bioDisplay.style.display === 'none') {
+                bioDisplay.style.display = 'block';
+                bioEdit.style.display = 'none';
+            } else {
+                bioDisplay.style.display = 'none';
+                bioEdit.style.display = 'block';
+            }
+        }
+    </script>
 </body>
 </html>
