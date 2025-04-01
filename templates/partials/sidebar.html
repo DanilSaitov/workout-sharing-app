@@ -1,3 +1,20 @@
+<style>
+    .left-column {
+        background-color: #23272A; /* Sidebar Background */
+        color: #ffffff; /* Text color for better contrast */
+    }
+    .nav-link {
+        color: #ffffff; /* Default text color for links */
+    }
+    .nav-link.active {
+        background-color: #3488A0; /* Primary Accent for active links */
+        color: #ffffff;
+    }
+    .nav-link:hover {
+        background-color: #2C6D7E; /* Slightly darker shade for hover */
+    }
+</style>
+
 {% if user.is_authenticated %}
     <div class="text-center mb-4">
         {% if user.profile_picture %}
