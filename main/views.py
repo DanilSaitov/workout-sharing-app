@@ -7,8 +7,9 @@ from django.forms import ModelForm
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.db.models import Q
-from .models import User, WorkoutRequest, FriendRequest, Friendship, Message
+from .models import User, WorkoutRequest, FriendRequest, Friendship, Message, WorkoutInvitation
 from .forms import WorkoutRequestForm
+from django.utils import timezone
 
 # Create your views here.
 class CustomUserCreationForm(UserCreationForm):
@@ -383,16 +384,96 @@ def conversation(request, username):
         msg.is_read = True
         msg.save()
     
+    # Handle regular message sending
     if request.method == 'POST':
-        content = request.POST.get('content')
-        if content:
-            new_message = Message(sender=request.user, receiver=partner, content=content)
-            new_message.save()
-            return redirect('conversation', username=username)
+        if 'content' in request.POST:
+            content = request.POST.get('content')
+            if content:
+                new_message = Message(sender=request.user, receiver=partner, content=content)
+                new_message.save()
+                return redirect('conversation', username=username)
+        
+        # Handle workout invitation
+        elif 'workout_invitation' in request.POST:
+            workout_id = request.POST.get('workout_id')
+            if workout_id:
+                workout = get_object_or_404(WorkoutRequest, id=workout_id, user=request.user)
+                
+                # Create a message with the invitation
+                invitation_content = f"📅 Workout Invitation: {workout.body_part} on {workout.date} at {workout.time} ({workout.experience_level} level)"
+                new_message = Message(sender=request.user, receiver=partner, content=invitation_content)
+                new_message.save()
+                
+                # Create the workout invitation linked to the message
+                invitation = WorkoutInvitation(
+                    workout_request=workout,
+                    sender=request.user,
+                    receiver=partner,
+                    message=new_message
+                )
+                invitation.save()
+                
+                return redirect('conversation', username=username)
+    
+    # Get the user's workout requests for the invitation dropdown
+    user_workouts = WorkoutRequest.objects.filter(user=request.user, date__gte=timezone.now().date()).order_by('date', 'time')
+    print(f"Found {user_workouts.count()} upcoming workouts for user {request.user.username}")
+    
+    # Let's check if the user has any workout requests at all
+    all_user_workouts = WorkoutRequest.objects.filter(user=request.user)
+    print(f"User has {all_user_workouts.count()} total workout requests")
+    
+    # If no upcoming workouts found, include some recent past ones too (just for demonstration)
+    if user_workouts.count() == 0:
+        # Include recent past workouts too (last 7 days) for demonstration
+        user_workouts = WorkoutRequest.objects.filter(
+            user=request.user, 
+            date__gte=timezone.now().date() - timezone.timedelta(days=7)
+        ).order_by('date', 'time')
+        print(f"Including recent workouts: now found {user_workouts.count()} workouts")
     
     context = {
         'partner': partner,
         'messages': messages_list,
+        'user_workouts': user_workouts,
     }
     
     return render(request, 'conversation.html', context)
+
+@login_required(login_url='login')
+def respond_workout_invitation(request, invitation_id, action):
+    invitation = get_object_or_404(WorkoutInvitation, id=invitation_id, receiver=request.user)
+    
+    if action == 'accept':
+        invitation.status = 'accepted'
+        invitation.save()
+        
+        # Send a confirmation message back
+        confirmation_message = f"✅ I accepted your invitation to {invitation.workout_request.body_part} on {invitation.workout_request.date} at {invitation.workout_request.time}."
+        
+        new_message = Message(
+            sender=request.user, 
+            receiver=invitation.sender, 
+            content=confirmation_message
+        )
+        new_message.save()
+        
+        messages.success(request, f"You accepted the workout invitation from {invitation.sender.username}.")
+    
+    elif action == 'decline':
+        invitation.status = 'declined'
+        invitation.save()
+        
+        # Send a decline message back
+        decline_message = f"❌ I can't make it to {invitation.workout_request.body_part} on {invitation.workout_request.date} at {invitation.workout_request.time}."
+        
+        new_message = Message(
+            sender=request.user, 
+            receiver=invitation.sender, 
+            content=decline_message
+        )
+        new_message.save()
+        
+        messages.info(request, f"You declined the workout invitation from {invitation.sender.username}.")
+    
+    return redirect('conversation', username=invitation.sender.username)

@@ -126,6 +126,28 @@
         .back-button:hover {
             color: #007bff;
         }
+        .workout-invitation {
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 5px;
+            position: relative;
+        }
+        .workout-invitation-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .invitation-badge {
+            background-color: #007bff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -160,7 +182,25 @@
                     {% if messages %}
                         {% for message in messages %}
                             <div class="message {% if message.sender == request.user %}message-sent{% else %}message-received{% endif %}">
-                                {{ message.content }}
+                                {% if "📅 Workout Invitation:" in message.content and message.sender != request.user %}
+                                    <span class="invitation-badge">Workout Invitation</span><br>
+                                    {{ message.content }}
+                                    
+                                    {% for invitation in message.workout_invitation.all %}
+                                        {% if invitation.status == 'pending' %}
+                                            <div class="workout-invitation-buttons">
+                                                <a href="{% url 'respond_workout_invitation' invitation.id 'accept' %}" class="btn btn-sm btn-success">Accept</a>
+                                                <a href="{% url 'respond_workout_invitation' invitation.id 'decline' %}" class="btn btn-sm btn-outline-danger">Decline</a>
+                                            </div>
+                                        {% elif invitation.status == 'accepted' %}
+                                            <div class="badge bg-success mt-2">Accepted</div>
+                                        {% elif invitation.status == 'declined' %}
+                                            <div class="badge bg-danger mt-2">Declined</div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    {{ message.content }}
+                                {% endif %}
                                 <div class="message-time">
                                     {{ message.created_at|date:"M d, Y" }} at {{ message.created_at|time:"g:i A" }}
                                 </div>
@@ -174,6 +214,34 @@
                 </div>
                 
                 <div class="message-input-container">
+                    <div class="d-flex justify-content-end mb-2">
+                        <!-- Debug info - temporary -->
+                        <span class="text-muted me-3">{{ user_workouts|length }} workouts available</span>
+                        
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="workoutDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-calendar-plus"></i> Invite to Workout
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="workoutDropdown">
+                                {% for workout in user_workouts %}
+                                    <li>
+                                        <form method="post" action="{% url 'conversation' username=partner.username %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="workout_invitation" value="1">
+                                            <input type="hidden" name="workout_id" value="{{ workout.id }}">
+                                            <button type="submit" class="dropdown-item">
+                                                {{ workout.body_part }} on {{ workout.date }} at {{ workout.time }} ({{ workout.experience_level }})
+                                            </button>
+                                        </form>
+                                    </li>
+                                {% empty %}
+                                    <li><span class="dropdown-item text-muted">No upcoming workouts</span></li>
+                                {% endfor %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'create_workout_request' %}">Create New Workout</a></li>
+                            </ul>
+                        </div>
+                    </div>
                     <form method="post" class="message-form">
                         {% csrf_token %}
                         <input type="text" name="content" class="form-control message-input" placeholder="Type a message..." required>

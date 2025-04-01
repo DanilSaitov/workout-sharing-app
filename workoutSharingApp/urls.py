@@ -42,4 +42,6 @@ urlpatterns = [
     # Messaging URLs
     path('inbox/', views.inbox, name='inbox'),
     path('conversation/<str:username>/', views.conversation, name='conversation'),
+    # Workout Invitation URLs
+    path('workout-invitation/<int:invitation_id>/<str:action>/', views.respond_workout_invitation, name='respond_workout_invitation'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
