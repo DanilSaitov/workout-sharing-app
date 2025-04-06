@@ -1,6 +1,9 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
+from django.core.validators import MinValueValidator
+from django.db.models import Q, Count, Case, When
 
 # Create your models here.
 
@@ -42,7 +45,44 @@ class WorkoutRequest(models.Model):
     time = models.TimeField()
     body_part = models.CharField(max_length=100)
     experience_level = models.CharField(max_length=50, choices=[('Beginner', 'Beginner'), ('Intermediate', 'Intermediate'), ('Advanced', 'Advanced')])
+    max_participants = models.PositiveIntegerField(default=2, validators=[MinValueValidator(2)])
+    current_participants = models.IntegerField(default=1)
+    is_full = models.BooleanField(default=False)
+    is_past = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    updating_participants = models.BooleanField(default=False)
+    
+    def update_participant_count(self):
+        """Update the participant count and full status"""
+        if self.updating_participants:
+            return
+        
+        self.updating_participants = True
+        # Calculate new values
+        new_count = self.workout_invitations.filter(Q(status='accepted') | Q(status='completed')).count() + 1
+        new_is_full = new_count >= self.max_participants
+        
+        # Only update if values have changed
+        if self.current_participants != new_count or self.is_full != new_is_full:
+            self.current_participants = new_count
+            self.is_full = new_is_full
+            self.save(update_fields=['current_participants', 'is_full'])
+        
+        self.updating_participants = False
+    
+    def save(self, *args, **kwargs):
+        # Set initial values for new instances
+        if not self.pk:
+            self.current_participants = 1  # Start with creator
+            self.is_full = False
+            self.is_past = False
+        
+        # Update values for existing instances
+        if self.pk:
+            self.is_past = timezone.now() > timezone.make_aware(timezone.datetime.combine(self.date, self.time))
+            self.update_participant_count()
+        
+        super().save(*args, **kwargs)
     
     def __str__(self):
         return f"{self.user.username} - {self.body_part} on {self.date} at {self.time}"
@@ -91,11 +131,12 @@ class WorkoutInvitation(models.Model):
         ('pending', 'Pending'),
         ('accepted', 'Accepted'),
         ('declined', 'Declined'),
+        ('cancelled', 'Cancelled'),
         ('completed', 'Completed'),
         ('missed', 'Missed'),
     ]
     
-    workout_request = models.ForeignKey(WorkoutRequest, on_delete=models.CASCADE, related_name='invitations')
+    workout_request = models.ForeignKey(WorkoutRequest, on_delete=models.CASCADE, related_name='workout_invitations')
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='sent_workout_invitations', on_delete=models.CASCADE)
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='received_workout_invitations', on_delete=models.CASCADE)
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='workout_invitation', null=True, blank=True)
@@ -103,8 +144,26 @@ class WorkoutInvitation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    def cancel(self, user):
+        """Cancel this invitation and notify the other party"""
+        if user == self.sender:
+            self.status = 'cancelled'
+            Message.objects.create(
+                sender=user,
+                receiver=self.receiver,
+                content=f"I've cancelled our workout on {self.workout_request.date}"
+            )
+        else:
+            self.status = 'declined'
+            Message.objects.create(
+                sender=user,
+                receiver=self.sender,
+                content=f"I can't attend the workout on {self.workout_request.date}"
+            )
+        self.save()
+
     class Meta:
         ordering = ['-created_at']
-    
+        
     def __str__(self):
-        return f"{self.sender.username} invited {self.receiver.username} to {self.workout_request.body_part} workout"
+        return f"{self.sender.username} → {self.receiver.username}: {self.workout_request.body_part} ({self.status})"

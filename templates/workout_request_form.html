@@ -57,23 +57,53 @@
                                 {% endif %}
                             </h2>
                             
-                            <form method="POST">
+                            <form method="POST" action="{% url 'create_workout_request' %}">
                                 {% csrf_token %}
                                 <div class="mb-3">
                                     <label for="id_date" class="form-label">Date</label>
                                     {{ form.date }}
+                                    {% if form.date.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.date.errors }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                                 <div class="mb-3">
                                     <label for="id_time" class="form-label">Time</label>
                                     {{ form.time }}
+                                    {% if form.time.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.time.errors }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                                 <div class="mb-3">
                                     <label for="id_body_part" class="form-label">Body Part</label>
                                     {{ form.body_part }}
+                                    {% if form.body_part.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.body_part.errors }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                                 <div class="mb-3">
                                     <label for="id_experience_level" class="form-label">Experience Level</label>
                                     {{ form.experience_level }}
+                                    {% if form.experience_level.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.experience_level.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_max_participants" class="form-label">Maximum Participants</label>
+                                    {{ form.max_participants }}
+                                    <small class="form-text text-muted">Minimum 2 participants (including yourself)</small>
+                                    {% if form.max_participants.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.max_participants.errors }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                                 
                                 <div class="text-center mt-4">

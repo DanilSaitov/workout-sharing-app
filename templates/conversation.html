@@ -189,8 +189,14 @@
                                     {% for invitation in message.workout_invitation.all %}
                                         {% if invitation.status == 'pending' %}
                                             <div class="workout-invitation-buttons">
-                                                <a href="{% url 'respond_workout_invitation' invitation.id 'accept' %}" class="btn btn-sm btn-success">Accept</a>
-                                                <a href="{% url 'respond_workout_invitation' invitation.id 'decline' %}" class="btn btn-sm btn-outline-danger">Decline</a>
+                                                <form method="post" action="{% url 'respond_workout_invitation' invitation.id 'accept' %}" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-success">Accept</button>
+                                                </form>
+                                                <form method="post" action="{% url 'respond_workout_invitation' invitation.id 'decline' %}" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Decline</button>
+                                                </form>
                                             </div>
                                         {% elif invitation.status == 'accepted' %}
                                             <div class="badge bg-success mt-2">Accepted</div>
