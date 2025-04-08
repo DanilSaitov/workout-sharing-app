@@ -198,13 +198,129 @@
                 <div class="right-top">
                     <h4 class="p-3"><i class="bi bi-info-circle"></i> Recent Activity</h4>
                     <div class="p-3">
-                        <p>Stay updated with recent activity from your friends.</p>
+                        {% if user.is_authenticated %}
+                            {% if recent_messages or recent_invitations or friend_requests %}
+                                <!-- Friend Requests -->
+                                {% if friend_requests %}
+                                    <div class="mb-3">
+                                        <h6 class="border-bottom pb-2"><i class="bi bi-people"></i> Friend Requests</h6>
+                                        {% for request in friend_requests %}
+                                            <div class="d-flex align-items-center mb-2 px-2 py-1 rounded" style="background-color: rgba(255,255,255,0.05);">
+                                                {% if request.from_user.profile_picture %}
+                                                    <img src="{{ request.from_user.profile_picture.url }}" class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;">
+                                                {% else %}
+                                                    <div class="profile-circle me-2" style="width: 30px; height: 30px; font-size: 0.8rem;">
+                                                        {{ request.from_user.username.0|upper }}
+                                                    </div>
+                                                {% endif %}
+                                                <div class="flex-grow-1">
+                                                    <small>{{ request.from_user.username }} sent you a friend request</small>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Workout Invitations -->
+                                {% if recent_invitations %}
+                                    <div class="mb-3">
+                                        <h6 class="border-bottom pb-2"><i class="bi bi-calendar-check"></i> Workout Updates</h6>
+                                        {% for invite in recent_invitations %}
+                                            <div class="d-flex align-items-center mb-2 px-2 py-1 rounded" style="background-color: rgba(255,255,255,0.05);">
+                                                <div class="flex-grow-1">
+                                                    <small>
+                                                        {% if invite.status == 'pending' %}
+                                                            <span class="text-info">New invitation</span>
+                                                        {% elif invite.status == 'accepted' %}
+                                                            <span class="text-success">Accepted workout</span>
+                                                        {% elif invite.status == 'declined' %}
+                                                            <span class="text-danger">Declined workout</span>
+                                                        {% elif invite.status == 'cancelled' %}
+                                                            <span class="text-warning">Cancelled workout</span>
+                                                        {% endif %}
+                                                        : {{ invite.workout_request.body_part }} ({{ invite.workout_request.date|date:"M d" }})
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Recent Messages -->
+                                {% if recent_messages %}
+                                    <div class="mb-3">
+                                        <h6 class="border-bottom pb-2"><i class="bi bi-chat"></i> Messages</h6>
+                                        {% for message in recent_messages %}
+                                            <div class="d-flex align-items-center mb-2 px-2 py-1 rounded" style="background-color: rgba(255,255,255,0.05);">
+                                                {% if message.sender.profile_picture %}
+                                                    <img src="{{ message.sender.profile_picture.url }}" class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;">
+                                                {% else %}
+                                                    <div class="profile-circle me-2" style="width: 30px; height: 30px; font-size: 0.8rem;">
+                                                        {{ message.sender.username.0|upper }}
+                                                    </div>
+                                                {% endif %}
+                                                <div class="flex-grow-1">
+                                                    <small>{{ message.sender.username }}: {{ message.content|truncatechars:25 }}</small>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                        <div class="text-end">
+                                            <a href="{% url 'inbox' %}" class="btn btn-sm btn-outline-primary mt-2">View All</a>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <p class="text-muted small">No recent activity to display.</p>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-muted small">Sign in to see your recent activity.</p>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="right-bottom">
                     <h4 class="p-3"><i class="bi bi-graph-up"></i> Your Stats</h4>
                     <div class="p-3">
-                        <p>Track your workout progress and achievements.</p>
+                        {% if user.is_authenticated %}
+                            {% if total_workouts > 0 %}
+                                <div class="row mb-3">
+                                    <div class="col-4 text-center">
+                                        <h2 class="mb-0">{{ total_workouts }}</h2>
+                                        <small class="text-muted">Total</small>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <h2 class="mb-0">{{ completed_workouts }}</h2>
+                                        <small class="text-muted">Completed</small>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <h2 class="mb-0">{{ created_workouts }}</h2>
+                                        <small class="text-muted">Created</small>
+                                    </div>
+                                </div>
+                                
+                                {% if favorite_body_part %}
+                                <div class="card bg-dark mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title"><i class="bi bi-star"></i> Favorite Body Part</h6>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>{{ favorite_body_part.0 }}</span>
+                                            <span class="badge bg-primary">{{ favorite_body_part.1 }} workouts</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="text-center mt-4">
+                                    <a href="{% url 'workout_stats' %}" class="btn btn-sm btn-outline-primary">View Detailed Stats</a>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-3">
+                                    <i class="bi bi-activity" style="font-size: 2rem; color: #666;"></i>
+                                    <p class="mt-2 text-muted small">No workout data yet. Join or create workouts to see your stats!</p>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-muted small">Sign in to see your workout statistics.</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>

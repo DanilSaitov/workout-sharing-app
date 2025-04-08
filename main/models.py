@@ -169,3 +169,103 @@ class WorkoutInvitation(models.Model):
         
     def __str__(self):
         return f"{self.sender.username} → {self.receiver.username}: {self.workout_request.body_part} ({self.status})"
+
+# Activity Feed Model
+class ActivityFeed(models.Model):
+    ACTIVITY_TYPES = [
+        ('workout_created', 'Workout Created'),
+        ('workout_cancelled', 'Workout Cancelled'),
+        ('workout_deleted', 'Workout Deleted'),
+        ('friend_request', 'Friend Request'),
+        ('friend_added', 'Friend Added'),
+        ('message_received', 'Message Received'),
+    ]
+    
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='activities')
+    activity_type = models.CharField(max_length=50, choices=ACTIVITY_TYPES)
+    message = models.TextField()
+    related_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='related_activities')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"{self.user.username} - {self.activity_type} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+# User Settings Model
+class UserSettings(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_settings')
+    show_friend_activities = models.BooleanField(default=True)
+    show_workout_activities = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return f"Settings for {self.user.username}"
+
+# Workout Stats Model
+class WorkoutStats(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='workout_stats')
+    total_workouts = models.IntegerField(default=0)
+    completed_workouts = models.IntegerField(default=0)
+    cancelled_workouts = models.IntegerField(default=0)
+    body_parts_stats = models.JSONField(default=dict)  # {'chest': 5, 'legs': 3, etc.}
+    last_updated = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Workout stats for {self.user.username}"
+    
+    def update_stats(self):
+        """Update workout statistics for the user"""
+        # Count total workouts (both created and participated)
+        created = WorkoutRequest.objects.filter(user=self.user).count()
+        participated = WorkoutInvitation.objects.filter(
+            receiver=self.user, 
+            status__in=['accepted', 'completed']
+        ).count()
+        
+        self.total_workouts = created + participated
+        
+        # Count completed workouts
+        completed_created = WorkoutRequest.objects.filter(
+            user=self.user, 
+            is_past=True
+        ).count()
+        
+        completed_participated = WorkoutInvitation.objects.filter(
+            receiver=self.user, 
+            status='completed'
+        ).count()
+        
+        self.completed_workouts = completed_created + completed_participated
+        
+        # Count cancelled workouts
+        cancelled_created = WorkoutRequest.objects.filter(
+            user=self.user, 
+            workout_invitations__status='cancelled'
+        ).count()
+        
+        cancelled_participated = WorkoutInvitation.objects.filter(
+            receiver=self.user, 
+            status='cancelled'
+        ).count()
+        
+        self.cancelled_workouts = cancelled_created + cancelled_participated
+        
+        # Calculate body part stats
+        body_parts = {}
+        
+        # From created workouts
+        for part in WorkoutRequest.objects.filter(user=self.user).values('body_part').annotate(count=Count('body_part')):
+            body_parts[part['body_part']] = part['count']
+        
+        # From participated workouts
+        for part in WorkoutInvitation.objects.filter(
+            receiver=self.user, 
+            status__in=['accepted', 'completed']
+        ).values('workout_request__body_part').annotate(count=Count('workout_request__body_part')):
+            part_name = part['workout_request__body_part']
+            body_parts[part_name] = body_parts.get(part_name, 0) + part['count']
+        
+        self.body_parts_stats = body_parts
+        self.save()

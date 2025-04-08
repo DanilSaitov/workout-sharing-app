@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+{% extends 'main.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-2 left-column">
+            {% include 'partials/sidebar.html' %}
+        </div>
+
+        <!-- Center Column -->
+        <div class="col-7 center-column">
+            <h4 class="p-3"><i class="bi bi-bell"></i> Recent Activity</h4>
+            
+            <div class="p-3">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} mb-3">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <!-- Messages -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-chat-dots"></i> New Messages</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for message in messages %}
+                                <a href="{% url 'conversation' username=message.sender.username %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ message.sender.username }}</h6>
+                                        <small>{{ message.created_at|date:"M d, g:i a" }}</small>
+                                    </div>
+                                    <p class="mb-1">{{ message.content|truncatechars:50 }}</p>
+                                    {% if not message.is_read %}
+                                        <span class="badge bg-danger">New</span>
+                                    {% endif %}
+                                </a>
+                            {% empty %}
+                                <p class="text-muted">No new messages.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Workout Invitations -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Workout Updates</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for invite in invitations %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">
+                                            {{ invite.workout_request.body_part }} workout ({{ invite.workout_request.experience_level }})
+                                        </h6>
+                                        <small>{{ invite.created_at|date:"M d, g:i a" }}</small>
+                                    </div>
+                                    <p class="mb-1">
+                                        Date: {{ invite.workout_request.date }}, Time: {{ invite.workout_request.time|time:"g:i a" }}
+                                    </p>
+                                    <p class="mb-1">From: {{ invite.sender.username }}</p>
+                                    <div class="mt-2">
+                                        {% if invite.status == 'pending' %}
+                                            <a href="{% url 'respond_workout_invitation' invitation_id=invite.id action='accept' %}" class="btn btn-sm btn-success me-2">Accept</a>
+                                            <a href="{% url 'respond_workout_invitation' invitation_id=invite.id action='decline' %}" class="btn btn-sm btn-danger">Decline</a>
+                                        {% elif invite.status == 'accepted' %}
+                                            <span class="badge bg-success">Accepted</span>
+                                        {% elif invite.status == 'declined' %}
+                                            <span class="badge bg-danger">Declined</span>
+                                        {% elif invite.status == 'cancelled' %}
+                                            <span class="badge bg-warning text-dark">Cancelled</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <p class="text-muted">No workout invitations.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Friend Requests -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-people"></i> Friend Requests</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for request in friend_requests %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ request.from_user.username }}</h6>
+                                        <small>{{ request.created_at|date:"M d, g:i a" }}</small>
+                                    </div>
+                                    <p class="mb-1">Wants to be your friend</p>
+                                    <div class="mt-2">
+                                        <a href="{% url 'accept_friend_request' username=request.from_user.username %}" class="btn btn-sm btn-success me-2">Accept</a>
+                                        <a href="{% url 'reject_friend_request' username=request.from_user.username %}" class="btn btn-sm btn-danger">Reject</a>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <p class="text-muted">No friend requests.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-3 right-column">
+            <div class="right-top p-3">
+                <h5>Activity Settings</h5>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="workoutNotifications" checked>
+                    <label class="form-check-label" for="workoutNotifications">Workout Activities</label>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="friendNotifications" checked>
+                    <label class="form-check-label" for="friendNotifications">Friend Activities</label>
+                </div>
+                <p class="text-muted small">Change these settings on the <a href="{% url 'settings' %}" class="text-decoration-none">settings page</a>.</p>
+            </div>
+            <div class="right-bottom p-3">
+                <h5>Upcoming Workouts</h5>
+                <div id="upcoming-workouts">
+                    <!-- Will be populated by JS -->
+                </div>
+                
+                <script>
+                // Load upcoming workouts for sidebar
+                fetch('/api/workouts/upcoming/')
+                    .then(response => response.json())
+                    .then(workouts => {
+                        const container = document.getElementById('upcoming-workouts');
+                        if (workouts.length === 0) {
+                            container.innerHTML = '<p class="text-muted">No upcoming workouts.</p>';
+                            return;
+                        }
+                        
+                        container.innerHTML = workouts.slice(0, 3).map(workout => `
+                            <div class="card mb-3 ${workout.type === 'created' ? 'bg-success text-white' : 'bg-primary text-white'}">
+                                <div class="card-body">
+                                    <h5 class="card-title">${workout.title}</h5>
+                                    <p class="card-text">${workout.date}</p>
+                                </div>
+                            </div>
+                        `).join('');
+                        
+                        if (workouts.length > 3) {
+                            container.innerHTML += `
+                                <div class="text-center mt-2">
+                                    <a href="{% url 'calendar' %}" class="btn btn-sm btn-outline-primary">See all</a>
+                                </div>
+                            `;
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -103,7 +103,7 @@
                     <div class="settings-section">
                         <h5><i class="bi bi-shield-lock"></i> Security</h5>
                         <div class="settings-card">
-                            <a href="#" class="btn btn-outline-primary mb-3">
+                            <a href="#" class="btn btn-outline-primary mb-3" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
                                 <i class="bi bi-key"></i> Change Password
                             </a>
                         </div>
@@ -113,16 +113,12 @@
                         <h5><i class="bi bi-bell"></i> Notifications</h5>
                         <div class="settings-card">
                             <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
-                                <label class="form-check-label" for="emailNotifications">Email Notifications</label>
+                                <input class="form-check-input" type="checkbox" id="friendActivities" checked>
+                                <label class="form-check-label" for="friendActivities">Show Friend Activities</label>
                             </div>
                             <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="friendRequests" checked>
-                                <label class="form-check-label" for="friendRequests">Friend Request Notifications</label>
-                            </div>
-                            <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="messageNotifications" checked>
-                                <label class="form-check-label" for="messageNotifications">Message Notifications</label>
+                                <input class="form-check-input" type="checkbox" id="workoutActivities" checked>
+                                <label class="form-check-label" for="workoutActivities">Show Workout Activities</label>
                             </div>
                         </div>
                     </div>
@@ -169,6 +165,40 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Change Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="{% url 'settings' %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="old_password" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="old_password" name="old_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_password1" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new_password1" name="new_password1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_password2" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="new_password2" name="new_password2" required>
+                        </div>
+                        <input type="hidden" name="password" value="change">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Change Password</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

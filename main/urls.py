@@ -34,4 +34,8 @@ urlpatterns = [
     # Calendar API
     path('api/workouts/', views.workout_events_api, name='workout_events_api'),
     path('api/workouts/upcoming/', views.upcoming_workouts_api, name='upcoming_workouts_api'),
+    
+    # Stats and Activity
+    path('stats/', views.workout_stats, name='workout_stats'),
+    path('activity/', views.activity_feed, name='activity_feed'),
 ]

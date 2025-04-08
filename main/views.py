@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib import messages
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth.decorators import login_required
 from django.forms import ModelForm
 from django.http import JsonResponse, HttpResponseRedirect
@@ -22,15 +22,61 @@ class CustomUserCreationForm(UserCreationForm):
 
 def index(request):
     if request.user.is_authenticated:
-        # Get future workouts for current user and others
-        workout_requests = WorkoutRequest.objects.filter(
-            date__gte=timezone.now().date(),
-            is_past=False,
-            is_full=False
-        ).order_by('date', 'time')
+        workout_requests = WorkoutRequest.objects.filter(date__gte=timezone.now().date(), is_past=False, is_full=False).order_by('date', 'time')
+        created_workouts = WorkoutRequest.objects.filter(user=request.user).count()
+        participated_workouts = WorkoutInvitation.objects.filter(receiver=request.user, status__in=['accepted', 'completed']).count()
+        total_workouts = created_workouts + participated_workouts
+        completed_workouts = WorkoutInvitation.objects.filter(receiver=request.user, status='completed').count()
+        completed_workouts += WorkoutRequest.objects.filter(user=request.user, is_past=True).count()
         
-        return render(request, 'index.html', {'workout_requests': workout_requests})
-    return render(request, 'index.html')
+        # Get recent messages
+        recent_messages = Message.objects.filter(receiver=request.user).order_by('-created_at')[:5]
+        
+        # Get recent workout invitations
+        recent_invitations = WorkoutInvitation.objects.filter(receiver=request.user).order_by('-created_at')[:5]
+        
+        # Get pending friend requests
+        friend_requests = FriendRequest.objects.filter(to_user=request.user)
+        
+        # Calculate favorite body part based on workout history
+        body_part_count = {}
+        user_workouts = WorkoutRequest.objects.filter(user=request.user)
+        user_invitations = WorkoutInvitation.objects.filter(receiver=request.user, status__in=['accepted', 'completed'])
+        
+        for workout in user_workouts:
+            body_part = workout.body_part
+            if body_part in body_part_count:
+                body_part_count[body_part] += 1
+            else:
+                body_part_count[body_part] = 1
+                
+        for invite in user_invitations:
+            body_part = invite.workout_request.body_part
+            if body_part in body_part_count:
+                body_part_count[body_part] += 1
+            else:
+                body_part_count[body_part] = 1
+        
+        favorite_body_part = None
+        if body_part_count:
+            favorite_body_part = max(body_part_count.items(), key=lambda x: x[1])
+        
+        context = {
+            'workout_requests': workout_requests,
+            'total_workouts': total_workouts,
+            'created_workouts': created_workouts,
+            'completed_workouts': completed_workouts,
+            'favorite_body_part': favorite_body_part,
+            'recent_messages': recent_messages,
+            'recent_invitations': recent_invitations,
+            'friend_requests': friend_requests,
+        }
+    else:
+        workout_requests = WorkoutRequest.objects.filter(date__gte=timezone.now().date(), is_past=False, is_full=False).order_by('date', 'time')
+        context = {
+            'workout_requests': workout_requests,
+        }
+    return render(request, 'index.html', context)
 
 def message(request):
     return render(request, 'message.html')
@@ -94,7 +140,113 @@ def profile(request, username):
 
 @login_required(login_url='login')
 def settings(request):
+    if request.method == 'POST':
+        if 'email' in request.POST:
+            request.user.email = request.POST.get('email')
+            request.user.save()
+            messages.success(request, "Email updated successfully!")
+            return redirect('settings')
+        elif 'username' in request.POST:
+            request.user.username = request.POST.get('username')
+            request.user.save()
+            messages.success(request, "Username updated successfully!")
+            return redirect('settings')
+        elif 'password' in request.POST:
+            form = PasswordChangeForm(request.user, request.POST)
+            if form.is_valid():
+                user = form.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, "Password updated successfully!")
+                return redirect('settings')
+            else:
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"{field}: {error}")
     return render(request, 'settings.html')
+
+@login_required(login_url='login')
+def workout_stats(request):
+    """
+    View for displaying workout statistics
+    """
+    # Get completed workouts
+    created_workouts = WorkoutRequest.objects.filter(
+        user=request.user
+    ).order_by('-date')
+    
+    participated_workouts = WorkoutInvitation.objects.filter(
+        receiver=request.user, 
+        status__in=['accepted', 'completed', 'cancelled']
+    ).select_related('workout_request').order_by('-created_at')
+    
+    # Calculate stats
+    total_workouts = created_workouts.count() + participated_workouts.count()
+    completed_created = created_workouts.filter(is_past=True).count()
+    completed_participated = participated_workouts.filter(status='completed').count()
+    total_completed = completed_created + completed_participated
+    
+    cancelled_created = WorkoutRequest.objects.filter(
+        user=request.user, 
+        workout_invitations__status='cancelled'
+    ).distinct().count()
+    
+    cancelled_participated = participated_workouts.filter(status='cancelled').count()
+    total_cancelled = cancelled_created + cancelled_participated
+    
+    # Calculate body part stats
+    body_parts_data = {}
+    
+    # From created workouts
+    for part in created_workouts.values('body_part').annotate(count=Count('body_part')):
+        body_parts_data[part['body_part']] = part['count']
+    
+    # From participated workouts
+    for part in participated_workouts.values('workout_request__body_part').annotate(count=Count('workout_request__body_part')):
+        part_name = part['workout_request__body_part']
+        if part_name:
+            body_parts_data[part_name] = body_parts_data.get(part_name, 0) + part['count']
+    
+    body_parts = [{"name": k, "count": v} for k, v in body_parts_data.items()]
+    body_parts.sort(key=lambda x: x['count'], reverse=True)
+    
+    context = {
+        'total_workouts': total_workouts,
+        'total_completed': total_completed,
+        'total_cancelled': total_cancelled,
+        'body_parts': body_parts,
+        'created_workouts': created_workouts[:10],  # Show the last 10 workouts
+        'participated_workouts': participated_workouts[:10],  # Show the last 10 workouts
+    }
+    
+    return render(request, 'stats.html', context)
+
+@login_required(login_url='login')
+def activity_feed(request):
+    """
+    View for displaying recent activities
+    """
+    # Get recent activities (messages, workout cancellations, etc.)
+    messages = Message.objects.filter(
+        receiver=request.user
+    ).order_by('-created_at')[:20]
+    
+    # Get workout invitations
+    invitations = WorkoutInvitation.objects.filter(
+        receiver=request.user
+    ).select_related('workout_request', 'sender').order_by('-created_at')[:20]
+    
+    # Get friend requests
+    friend_requests = FriendRequest.objects.filter(
+        to_user=request.user
+    ).select_related('from_user').order_by('-created_at')[:10]
+    
+    context = {
+        'messages': messages,
+        'invitations': invitations,
+        'friend_requests': friend_requests,
+    }
+    
+    return render(request, 'activity.html', context)
 
 def loginPage(request):
     page = 'login'
@@ -520,15 +672,26 @@ def cancel_workout(request, invitation_id):
 def cancel_workout_request(request, workout_id):
     workout_request = get_object_or_404(WorkoutRequest, id=workout_id, user=request.user)
     
-    # Delete the workout request and all associated invitations
+    # Get the associated invitations before deleting the workout request
+    accepted_invitations = WorkoutInvitation.objects.filter(
+        workout_request=workout_request, 
+        status='accepted'
+    )
+    
+    # Save information needed for notifications
+    body_part = workout_request.body_part
+    date = workout_request.date
+    time = workout_request.time
+    
+    # Delete the workout request
     workout_request.delete()
     
     # Notify all participants
-    for invite in WorkoutInvitation.objects.filter(workout_request=workout_request, status='accepted'):
+    for invite in accepted_invitations:
         message = Message(
             sender=request.user,
             receiver=invite.receiver,
-            content=f"⚠️ The workout {workout_request.body_part} on {workout_request.date} at {workout_request.time} has been cancelled by the creator."
+            content=f"⚠️ The workout {body_part} on {date} at {time} has been cancelled by the creator."
         )
         message.save()
     
