@@ -161,6 +161,8 @@ class WorkoutInvitation(models.Model):
                 content=f"I can't attend the workout on {self.workout_request.date}"
             )
         self.save()
+        # Update the participant count after cancellation
+        self.workout_request.update_participant_count()
 
     class Meta:
         ordering = ['-created_at']

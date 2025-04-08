@@ -139,6 +139,29 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     calendar.render();
 
+    // Define cancelWorkout in global scope
+    window.cancelWorkout = function(type, id) {
+        const url = type === 'created' ? `/workout-request/delete/${id}/` : `/workout/cancel/${id}/`;
+        fetch(url, {
+            method: 'POST',
+            headers: {'X-CSRFToken': '{{ csrf_token }}'}
+        }).then(() => {
+            // Remove the event from the calendar if it exists
+            const events = calendar.getEvents();
+            const event = events.find(e => {
+                const props = e.extendedProps;
+                return type === 'created' ? 
+                    (props.type === 'created' && props.workout_id === id) :
+                    (props.type === 'invitation' && props.invitation_id === id);
+            });
+            if (event) {
+                event.remove();
+            }
+            // Refresh the page to update the sidebar and participant counts
+            location.reload();
+        });
+    };
+
     // Load upcoming workouts
     fetch('/api/workouts/upcoming/')
         .then(response => response.json())
@@ -161,16 +184,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `).join('');
         });
-
-    function cancelWorkout(type, id) {
-        const url = type === 'created' ? `/workout-request/delete/${id}/` : `/workout/cancel/${id}/`;
-        fetch(url, {
-            method: 'POST',
-            headers: {'X-CSRFToken': '{{ csrf_token }}'}
-        }).then(() => {
-            location.reload();
-        });
-    }
 });
 </script>
 
