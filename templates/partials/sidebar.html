@@ -2,9 +2,14 @@
     .left-column {
         background-color: #23272A; /* Sidebar Background */
         color: #ffffff; /* Text color for better contrast */
+        min-height: 100vh; /* Ensure full height */
+        padding: 20px 0; /* Consistent padding */
     }
     .nav-link {
         color: #ffffff; /* Default text color for links */
+        padding: 10px 20px; /* Consistent padding for links */
+        display: block; /* Ensure block layout */
+        transition: background-color 0.2s, color 0.2s; /* Smooth transitions */
     }
     .nav-link.active {
         background-color: #3488A0; /* Primary Accent for active links */
@@ -12,15 +17,28 @@
     }
     .nav-link:hover {
         background-color: #2C6D7E; /* Slightly darker shade for hover */
+        color: #ffffff;
+    }
+    .profile-circle {
+        background-color: #7289DA; /* Default profile circle color */
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        width: 60px;
+        height: 60px;
+        margin: 0 auto; /* Center align */
     }
 </style>
 
 {% if user.is_authenticated %}
     <div class="text-center mb-4">
         {% if user.profile_picture %}
-            <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="profile-picture" style="width: 60px; height: 60px;">
+            <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="profile-picture" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
         {% else %}
-            <div class="profile-circle mx-auto" style="width: 60px; height: 60px; font-size: 1.5rem;">
+            <div class="profile-circle">
                 <a href="{% url 'profile' user.username %}">{{ user.username.0|upper }}</a>
             </div>
         {% endif %}
@@ -62,7 +80,7 @@
     </div>
 {% else %}
     <div class="text-center mb-4">
-        <div class="profile-circle mx-auto" style="width: 60px; height: 60px; font-size: 1.5rem;">
+        <div class="profile-circle">
             <i class="bi bi-person"></i>
         </div>
         <div class="mt-2">

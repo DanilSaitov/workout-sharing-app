@@ -5,81 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Messages - Workout Sharing App</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
+        body {
+            background-color: #2C2F33; /* Main Background */
+            color: #ffffff; /* Text color for better contrast */
+        }
         .left-column {
-            background-color: #f0f0f0;
-            min-height: 100vh;
-            border-right: 2px solid #ddd;
-            padding: 20px 0;
-        }
-        .left-column ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .left-column li {
-            padding: 10px 20px;
-            transition: background-color 0.2s;
-        }
-        .left-column li:hover {
-            background-color: #e0e0e0;
-        }
-        .left-column a {
-            color: #333;
-            text-decoration: none;
-            display: block;
-            font-size: 1.1em;
-        }
-        .left-column a:hover {
-            color: #007bff;
+            background-color: #23272A; /* Sidebar Background */
+            color: #ffffff; /* Text color for better contrast */
         }
         .center-column {
-            background-color: #ffffff;
+            background-color: #3A3D42; /* Slightly lighter background */
+            color: #ffffff; /* Text color for better contrast */
             min-height: 100vh;
+            padding: 20px;
         }
         .right-column {
-            background-color: #f8f8f8;
+            background-color: #23272A; /* Sidebar Background */
+            color: #ffffff; /* Text color for better contrast */
             min-height: 100vh;
-            border-left: 2px solid #ddd;
-            padding: 0;
-        }
-        .right-top {
-            background-color: #e8e8e8;
-            min-height: 33.33vh;
-            border-bottom: 2px solid #ddd;
-        }
-        .right-bottom {
-            background-color: #f0f0f0;
-            min-height: 66.67vh;
         }
     </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Left Column (1 part) -->
+            <!-- Left Column -->
             <div class="col-2 left-column">
                 {% include 'partials/sidebar.html' %}
             </div>
 
-            <!-- Center Column (3 parts) -->
+            <!-- Center Column -->
             <div class="col-7 center-column">
-                <h4 class="p-3">Messages</h4>
+                <h4 class="p-3"><i class="bi bi-chat-dots"></i> Messages</h4>
                 <!-- Add message-specific content here -->
             </div>
 
-            <!-- Right Column (1 part, split vertically 1:2) -->
+            <!-- Right Column -->
             <div class="col-3 right-column">
-                <div class="right-top">
-                    <h4 class="p-3">Message Details</h4>
+                <div class="p-3">
+                    <h4><i class="bi bi-info-circle"></i> Message Details</h4>
                 </div>
-                <div class="right-bottom">
-                    <h4 class="p-3">Message History</h4>
+                <div class="p-3">
+                    <h4><i class="bi bi-clock-history"></i> Message History</h4>
                 </div>
             </div>
         </div>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
