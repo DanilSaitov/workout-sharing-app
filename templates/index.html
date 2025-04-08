@@ -157,8 +157,12 @@
                                 <i class="bi bi-body-text me-1"></i> <strong>Body Part:</strong> {{ request.body_part }}<br>
                                 <i class="bi bi-calendar-date me-1"></i> <strong>Date:</strong> {{ request.date }}<br>
                                 <i class="bi bi-clock me-1"></i> <strong>Time:</strong> {{ request.time }}<br>
-                                <i class="bi bi-star me-1"></i> <strong>Experience Level:</strong> {{ request.experience_level }}
+                                <i class="bi bi-star me-1"></i> <strong>Experience Level:</strong> {{ request.experience_level }}<br>
+                                <i class="bi bi-people me-1"></i> <strong>Participants:</strong> {{ request.current_participants }}/{{ request.max_participants }}
                             </p>
+                            {% if request.is_full %}
+                                <div class="badge bg-secondary mt-2">Full</div>
+                            {% endif %}
                             <div class="d-flex mt-3">
                                 {% if request.user == user %}
                                     <!-- Edit and Delete buttons (only visible to the workout request owner) -->

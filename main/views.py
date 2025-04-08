@@ -6,10 +6,13 @@ from django.contrib.auth.decorators import login_required
 from django.forms import ModelForm
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import reverse
-from django.db.models import Q
+from django.db.models import Q, Count, F
 from .models import User, WorkoutRequest, FriendRequest, Friendship, Message, WorkoutInvitation
 from .forms import WorkoutRequestForm
 from django.utils import timezone
+from datetime import datetime, timedelta
+from django.db import transaction
+from django.views.decorators.http import require_http_methods
 
 # Create your views here.
 class CustomUserCreationForm(UserCreationForm):
@@ -18,38 +21,24 @@ class CustomUserCreationForm(UserCreationForm):
         fields = ['email', 'username', 'profile_picture', 'password1', 'password2']
 
 def index(request):
-    workout_requests = WorkoutRequest.objects.all().order_by('-created_at')
-    
-    # Filter parameters
-    body_part = request.GET.get('body_part')
-    experience_level = request.GET.get('experience_level')
-    date = request.GET.get('date')
-    search_query = request.GET.get('search')
-    
-    # Apply filters if provided
-    if body_part and body_part != 'All':
-        workout_requests = workout_requests.filter(body_part=body_part)
-    
-    if experience_level and experience_level != 'All':
-        workout_requests = workout_requests.filter(experience_level=experience_level)
-    
-    if date:
-        workout_requests = workout_requests.filter(date=date)
-    
-    # Apply search query if provided
-    if search_query:
-        workout_requests = workout_requests.filter(
-            Q(user__username__icontains=search_query) |
-            Q(body_part__icontains=search_query) |
-            Q(experience_level__icontains=search_query)
-        )
-    
-    return render(request, 'index.html', {'workout_requests': workout_requests})
+    if request.user.is_authenticated:
+        # Get future workouts for current user and others
+        workout_requests = WorkoutRequest.objects.filter(
+            date__gte=timezone.now().date(),
+            is_past=False,
+            is_full=False
+        ).order_by('date', 'time')
+        
+        return render(request, 'index.html', {'workout_requests': workout_requests})
+    return render(request, 'index.html')
 
 def message(request):
     return render(request, 'message.html')
 
-def calendar(request):
+def calendar_view(request):
+    """
+    Main calendar view
+    """
     return render(request, 'calendar.html')
 
 def profile(request, username):
@@ -185,16 +174,19 @@ def registerPage(request):
     return render(request, 'login_register.html', {'form': form})
 
 # CRUD operations for WorkoutRequest model
-@login_required(login_url='login')
+@login_required
+@transaction.atomic
+@require_http_methods(["GET", "POST"])
 def create_workout_request(request):
-    form = WorkoutRequestForm()
     if request.method == 'POST':
         form = WorkoutRequestForm(request.POST)
         if form.is_valid():
-            workout_request = form.save(commit=False)
-            workout_request.user = request.user
-            workout_request.save()
+            workout = form.save(commit=False)
+            workout.user = request.user
+            workout.save()  # This will trigger the save method in the model
             return redirect('index')
+    else:
+        form = WorkoutRequestForm()
     return render(request, 'workout_request_form.html', {'form': form})
 
 @login_required(login_url='login')
@@ -441,12 +433,20 @@ def conversation(request, username):
     return render(request, 'conversation.html', context)
 
 @login_required(login_url='login')
+@transaction.atomic
+@require_http_methods(["POST"])
 def respond_workout_invitation(request, invitation_id, action):
     invitation = get_object_or_404(WorkoutInvitation, id=invitation_id, receiver=request.user)
+    workout_request = invitation.workout_request
     
     if action == 'accept':
         invitation.status = 'accepted'
         invitation.save()
+        
+        # Update workout request participant count
+        workout_request.current_participants = workout_request.workout_invitations.filter(Q(status='accepted') | Q(status='completed')).count() + 1
+        workout_request.is_full = workout_request.current_participants >= workout_request.max_participants
+        workout_request.save()
         
         # Send a confirmation message back
         confirmation_message = f"✅ I accepted your invitation to {invitation.workout_request.body_part} on {invitation.workout_request.date} at {invitation.workout_request.time}."
@@ -464,6 +464,11 @@ def respond_workout_invitation(request, invitation_id, action):
         invitation.status = 'declined'
         invitation.save()
         
+        # Update workout request participant count
+        workout_request.current_participants = workout_request.workout_invitations.filter(Q(status='accepted') | Q(status='completed')).count() + 1
+        workout_request.is_full = workout_request.current_participants >= workout_request.max_participants
+        workout_request.save()
+        
         # Send a decline message back
         decline_message = f"❌ I can't make it to {invitation.workout_request.body_part} on {invitation.workout_request.date} at {invitation.workout_request.time}."
         
@@ -474,6 +479,169 @@ def respond_workout_invitation(request, invitation_id, action):
         )
         new_message.save()
         
-        messages.info(request, f"You declined the workout invitation from {invitation.sender.username}.")
+        messages.success(request, f"You declined the workout invitation from {invitation.sender.username}.")
     
-    return redirect('conversation', username=invitation.sender.username)
+    return redirect('inbox')
+
+@login_required
+def cancel_workout_invitation(request, invitation_id):
+    invitation = get_object_or_404(WorkoutInvitation, id=invitation_id, receiver=request.user)
+    invitation.cancel(request.user)
+    return JsonResponse({'status': 'success'})
+
+@login_required
+def cancel_workout(request, invitation_id):
+    invitation = get_object_or_404(WorkoutInvitation, id=invitation_id, receiver=request.user)
+    
+    # Check if this is the creator's workout request
+    if invitation.workout_request.user == request.user:
+        # Delete the workout request and all associated invitations
+        workout_request = invitation.workout_request
+        workout_request.delete()
+        
+        # Notify all participants
+        for invite in WorkoutInvitation.objects.filter(workout_request=workout_request, status='accepted'):
+            message = Message(
+                sender=request.user,
+                receiver=invite.receiver,
+                content=f"⚠️ The workout {workout_request.body_part} on {workout_request.date} at {workout_request.time} has been cancelled by the creator."
+            )
+            message.save()
+        
+        messages.success(request, "Workout request deleted successfully")
+    else:
+        # If not the creator, just cancel the invitation
+        invitation.cancel(request.user)
+        messages.success(request, "Workout cancelled successfully")
+    
+    return redirect('calendar')
+
+@login_required
+def cancel_workout_request(request, workout_id):
+    workout_request = get_object_or_404(WorkoutRequest, id=workout_id, user=request.user)
+    
+    # Delete the workout request and all associated invitations
+    workout_request.delete()
+    
+    # Notify all participants
+    for invite in WorkoutInvitation.objects.filter(workout_request=workout_request, status='accepted'):
+        message = Message(
+            sender=request.user,
+            receiver=invite.receiver,
+            content=f"⚠️ The workout {workout_request.body_part} on {workout_request.date} at {workout_request.time} has been cancelled by the creator."
+        )
+        message.save()
+    
+    messages.success(request, "Workout request deleted successfully")
+    return redirect('calendar')
+
+# Calendar API endpoints
+def workout_events_api(request):
+    """
+    API endpoint for FullCalendar to fetch workout events
+    Returns JSON in FullCalendar event format
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse([], safe=False)
+        
+    # Get accepted workout invitations for the current user
+    invitations = WorkoutInvitation.objects.filter(
+        receiver=request.user,
+        status='accepted'
+    ).select_related('workout_request')
+    
+    # Get workout requests created by the current user
+    created_workouts = WorkoutRequest.objects.filter(
+        user=request.user,
+        is_past=False
+    )
+    
+    events = []
+    
+    # Add accepted invitations
+    for invite in invitations:
+        workout = invite.workout_request
+        events.append({
+            'title': f"{workout.body_part} ({workout.experience_level})",
+            'start': f"{workout.date}T{workout.time}",
+            'allDay': False,
+            'extendedProps': {
+                'type': 'invitation',
+                'workout_id': workout.id,
+                'invitation_id': invite.id,
+                'creator': workout.user.username,
+                'status': 'accepted'
+            }
+        })
+    
+    # Add created workouts
+    for workout in created_workouts:
+        events.append({
+            'title': f"{workout.body_part} ({workout.experience_level})",
+            'start': f"{workout.date}T{workout.time}",
+            'allDay': False,
+            'extendedProps': {
+                'type': 'created',
+                'workout_id': workout.id,
+                'creator': workout.user.username,
+                'current_participants': workout.current_participants,
+                'max_participants': workout.max_participants
+            }
+        })
+    
+    return JsonResponse(events, safe=False)
+
+def upcoming_workouts_api(request):
+    """
+    API endpoint to get upcoming workouts for the sidebar
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse([], safe=False)
+        
+    # Get accepted workout invitations for the current user
+    invitations = WorkoutInvitation.objects.filter(
+        receiver=request.user,
+        status='accepted'
+    ).select_related('workout_request')
+    
+    # Get workout requests created by the current user
+    created_workouts = WorkoutRequest.objects.filter(
+        user=request.user,
+        is_past=False
+    )
+    
+    workouts = []
+    
+    # Add accepted invitations
+    for invite in invitations:
+        workout = invite.workout_request
+        workouts.append({
+            'type': 'invitation',
+            'title': f"{workout.body_part} ({workout.experience_level})",
+            'date': workout.date.strftime('%B %d, %Y'),
+            'time': workout.time.strftime('%I:%M %p'),
+            'body_part': workout.body_part,
+            'experience_level': workout.experience_level,
+            'creator': workout.user.username,
+            'invitation_id': invite.id,
+            'workout_id': workout.id
+        })
+    
+    # Add created workouts
+    for workout in created_workouts:
+        workouts.append({
+            'type': 'created',
+            'title': f"{workout.body_part} ({workout.experience_level})",
+            'date': workout.date.strftime('%B %d, %Y'),
+            'time': workout.time.strftime('%I:%M %p'),
+            'body_part': workout.body_part,
+            'experience_level': workout.experience_level,
+            'current_participants': workout.current_participants,
+            'max_participants': workout.max_participants,
+            'workout_id': workout.id
+        })
+    
+    # Sort by date and time
+    workouts.sort(key=lambda x: (x['date'], x['time']))
+    
+    return JsonResponse(workouts, safe=False)
