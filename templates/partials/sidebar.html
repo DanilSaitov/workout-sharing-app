@@ -1,23 +1,26 @@
 <style>
-    .left-column {
-        background-color: #23272A; /* Sidebar Background */
-        color: #ffffff; /* Text color for better contrast */
-        min-height: 100vh; /* Ensure full height */
-        padding: 20px 0; /* Consistent padding */
+    body {
+        background-color: #23272A;
     }
     .nav-link {
         color: #ffffff; /* Default text color for links */
-        padding: 10px 20px; /* Consistent padding for links */
+        padding: 15px 25px; /* Increased padding for larger size */
         display: block; /* Ensure block layout */
         transition: background-color 0.2s, color 0.2s; /* Smooth transitions */
+        margin-bottom: 25px; /* Increased spacing between links */
+        border-radius: 8px;
+        font-size: 1.2rem; /* Larger text size */
     }
     .nav-link.active {
-        background-color: #3488A0; /* Primary Accent for active links */
+        background-color: #575a5b; /* Primary Accent for active links */
         color: #ffffff;
     }
     .nav-link:hover {
         background-color: #2C6D7E; /* Slightly darker shade for hover */
         color: #ffffff;
+    }
+    .nav-link {
+        font-size: calc(1.2rem - 0.2vw); /* Scale text size down on smaller screens */
     }
     .profile-circle {
         background-color: #7289DA; /* Default profile circle color */
@@ -31,68 +34,95 @@
         height: 60px;
         margin: 0 auto; /* Center align */
     }
+    .profile-circle a {
+        color: white; /* Make text in the profile icon white */
+        text-decoration: none; /* Remove underline */
+    }
+    .mt-auto {
+        margin-top: 80px; /* Add more space above the logout button */
+    }
+
+    profile-spacing {
+        margin-top: 40px;
+    }
+
+    .profile-section {
+        margin-top: 40px; /* Space above the profile section */
+        margin-bottom: 40px; /* Space below the profile section */
+    }
+    .profile-picture {
+        margin-bottom: 20px; /* Space below the profile image */
+    }
+    .username-section {
+        margin-top: 20px; /* Space above the username */
+    }
+    .username-section a {
+        color: white; /* Make username text white */
+        text-decoration: none; /* Remove underline */
+    }
+
 </style>
 
-{% if user.is_authenticated %}
-    <div class="text-center mb-4">
-        {% if user.profile_picture %}
-            <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="profile-picture" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
-        {% else %}
+    {% if user.is_authenticated %}
+        <div class="profile-section text-center">
+            {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="profile-picture" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+            {% else %}
+                <div class="profile-circle">
+                    <a href="{% url 'profile' user.username %}">{{ user.username.0|upper }}</a>
+                </div>
+            {% endif %}
+            <div class="username-section fw-semibold"><a href="{% url 'profile' user.username %}">@{{ user.username }}</a></div>
+        </div>
+
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a href="{% url 'index' %}" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                    <i class="bi bi-house-door"></i> Home
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'inbox' %}" class="nav-link {% if 'inbox' in request.path or 'conversation' in request.path %}active{% endif %}">
+                    <i class="bi bi-chat"></i> Messages
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'friend_list' %}" class="nav-link {% if 'friends' in request.path %}active{% endif %}">
+                    <i class="bi bi-people"></i> Friends
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'calendar' %}" class="nav-link {% if 'calendar' in request.path %}active{% endif %}">
+                    <i class="bi bi-calendar"></i> Calendar
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'settings' %}" class="nav-link {% if 'settings' in request.path %}active{% endif %}">
+                    <i class="bi bi-gear"></i> Settings
+                </a>
+            </li>
+        </ul>
+
+        <div class="logout-button text-center">
+            <a href="{% url 'logout' %}" class="btn btn-outline-danger w-100">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </div>
+    {% else %}
+        <div class="profile-section text-center">
             <div class="profile-circle">
-                <a href="{% url 'profile' user.username %}">{{ user.username.0|upper }}</a>
+                <i class="bi bi-person"></i>
             </div>
-        {% endif %}
-        <div class="mt-2 fw-semibold"><a href="{% url 'profile' user.username %}">@{{ user.username }}</a></div>
-    </div>
-
-    <ul class="nav flex-column">
-        <li class="nav-item">
-            <a href="{% url 'index' %}" class="nav-link {% if request.path == '/' %}active{% endif %}">
-                <i class="bi bi-house-door"></i> Home
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'inbox' %}" class="nav-link {% if 'inbox' in request.path or 'conversation' in request.path %}active{% endif %}">
-                <i class="bi bi-chat"></i> Messages
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'friend_list' %}" class="nav-link {% if 'friends' in request.path %}active{% endif %}">
-                <i class="bi bi-people"></i> Friends
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'calendar' %}" class="nav-link {% if 'calendar' in request.path %}active{% endif %}">
-                <i class="bi bi-calendar"></i> Calendar
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'settings' %}" class="nav-link {% if 'settings' in request.path %}active{% endif %}">
-                <i class="bi bi-gear"></i> Settings
-            </a>
-        </li>
-    </ul>
-
-    <div class="mt-auto text-center" style="position: relative; bottom: 20px; width: 100%; padding: 0 20px;">
-        <a href="{% url 'logout' %}" class="btn btn-outline-danger w-100">
-            <i class="bi bi-box-arrow-right"></i> Logout
-        </a>
-    </div>
-{% else %}
-    <div class="text-center mb-4">
-        <div class="profile-circle">
-            <i class="bi bi-person"></i>
+            <div class="username-section">
+                <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+            </div>
         </div>
-        <div class="mt-2">
-            <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
-        </div>
-    </div>
 
-    <ul class="nav flex-column">
-        <li class="nav-item">
-            <a href="{% url 'index' %}" class="nav-link {% if request.path == '/' %}active{% endif %}">
-                <i class="bi bi-house-door"></i> Home
-            </a>
-        </li>
-    </ul>
-{% endif %}
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a href="{% url 'index' %}" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                    <i class="bi bi-house-door"></i> Home
+                </a>
+            </li>
+        </ul>
+    {% endif %}
