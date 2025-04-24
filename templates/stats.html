@@ -25,7 +25,7 @@
                 
                 <div class="row mb-4">
                     <div class="col-md-4">
-                        <div class="card bg-primary text-white">
+                        <div class="card bg-dark text-white">
                             <div class="card-body text-center">
                                 <h2 class="card-title">{{ total_workouts }}</h2>
                                 <p class="card-text">Total Workouts</p>
@@ -33,7 +33,7 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card bg-success text-white">
+                        <div class="card" style="background-color: #4CAF50; color: #ffffff;"> <!-- Softer green -->
                             <div class="card-body text-center">
                                 <h2 class="card-title">{{ total_completed }}</h2>
                                 <p class="card-text">Completed</p>
@@ -41,7 +41,7 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card bg-danger text-white">
+                        <div class="card" style="background-color: #E57373; color: #ffffff;"> <!-- Softer red -->
                             <div class="card-body text-center">
                                 <h2 class="card-title">{{ total_cancelled }}</h2>
                                 <p class="card-text">Cancelled</p>
@@ -52,7 +52,7 @@
                 
                 <div class="row mb-4">
                     <div class="col-12">
-                        <div class="card">
+                        <div class="card bg-dark text-white">
                             <div class="card-header">
                                 <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Body Parts Distribution</h5>
                             </div>
@@ -85,24 +85,24 @@
                 
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="card mb-4">
+                        <div class="card bg-dark text-white mb-4">
                             <div class="card-header">
                                 <h5 class="mb-0"><i class="bi bi-list-check"></i> Your Recent Workouts</h5>
                             </div>
                             <div class="card-body">
                                 <div class="list-group">
                                     {% for workout in created_workouts %}
-                                        <div class="list-group-item list-group-item-action">
+                                        <div class="list-group-item bg-dark text-white">
                                             <div class="d-flex justify-content-between">
                                                 <h6 class="mb-1">{{ workout.body_part }}</h6>
                                                 <small>{{ workout.date }}</small>
                                             </div>
                                             <p class="mb-1">{{ workout.experience_level }}</p>
-                                            <small class="text-muted">
+                                            <small>
                                                 {% if workout.is_past %}
-                                                    <span class="text-success">Completed</span>
+                                                    <span style="color: #4CAF50;">Completed</span> <!-- Softer green -->
                                                 {% else %}
-                                                    <span class="text-primary">Scheduled</span>
+                                                    <span style="color: #FFEB3B;">Scheduled</span> <!-- Softer yellow -->
                                                 {% endif %}
                                             </small>
                                         </div>
@@ -115,26 +115,26 @@
                     </div>
                     
                     <div class="col-md-6">
-                        <div class="card mb-4">
+                        <div class="card bg-dark text-white mb-4">
                             <div class="card-header">
                                 <h5 class="mb-0"><i class="bi bi-people"></i> Workouts You've Joined</h5>
                             </div>
                             <div class="card-body">
                                 <div class="list-group">
                                     {% for invite in participated_workouts %}
-                                        <div class="list-group-item list-group-item-action">
+                                        <div class="list-group-item bg-dark text-white">
                                             <div class="d-flex justify-content-between">
                                                 <h6 class="mb-1">{{ invite.workout_request.body_part }}</h6>
                                                 <small>{{ invite.workout_request.date }}</small>
                                             </div>
                                             <p class="mb-1">{{ invite.workout_request.experience_level }}</p>
-                                            <small class="text-muted">
-                                                {% if invite.status == 'completed' %}
-                                                    <span class="text-success">Completed</span>
+                                            <small>
+                                                {% if invite.status == 'accepted' %}
+                                                    <span style="color: #4CAF50;">Accepted</span> <!-- Softer green -->
                                                 {% elif invite.status == 'cancelled' %}
-                                                    <span class="text-danger">Cancelled</span>
+                                                    <span style="color: #E57373;">Cancelled</span> <!-- Softer red -->
                                                 {% else %}
-                                                    <span class="text-primary">{{ invite.status|title }}</span>
+                                                    <span style="color: #FFEB3B;">{{ invite.status|title }}</span> <!-- Softer yellow -->
                                                 {% endif %}
                                             </small>
                                         </div>
@@ -152,36 +152,35 @@
         <!-- Right Column -->
         <div class="col-3 right-column">
             <div class="right-top p-3">
-                <h5>Workout Trends</h5>
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h6 class="card-title">Most Active Month</h6>
-                        <p class="card-text">
-                            {% if total_workouts > 0 %}
-                                April 2025
-                            {% else %}
-                                Not enough data
-                            {% endif %}
-                        </p>
+                <h4 class="p-3"><i class="bi bi-graph-up"></i> Workout Trends</h4>
+                <div class="p-3">
+                    <div class="card bg-dark text-white mb-3" style="border: 1px solid #ffffff;"> <!-- Add white border -->
+                        <div class="card-body">
+                            <h6 class="card-title">Most Active Month</h6>
+                            <p class="card-text">
+                                {% if total_workouts > 0 %}
+                                    April 2025
+                                {% else %}
+                                    Not enough data
+                                {% endif %}
+                            </p>
+                        </div>
                     </div>
-                </div>
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h6 class="card-title">Favorite Body Part</h6>
-                        <p class="card-text">
-                            {% if body_parts %}
-                                {{ body_parts.0.name }} ({{ body_parts.0.count }} workouts)
-                            {% else %}
-                                Not enough data
-                            {% endif %}
-                        </p>
+                    <div class="card bg-dark text-white mb-3" style="border: 1px solid #ffffff;"> <!-- Add white border -->
+                        <div class="card-body">
+                            <h6 class="card-title">Favorite Body Part</h6>
+                            <p class="card-text">
+                                {% if body_parts %}
+                                    {{ body_parts.0.name }} ({{ body_parts.0.count }} workouts)
+                                {% else %}
+                                    Not enough data
+                                {% endif %}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="right-bottom p-3">
-                <h5>Workout Buddies</h5>
-                <p class="text-muted">Feature coming soon!</p>
-            </div>
+            
         </div>
     </div>
 </div>
