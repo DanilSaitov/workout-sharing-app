@@ -83,7 +83,11 @@
                         {% endif %}
                     </h2>
                     
+                    {% if editing %}
+                    <form method="POST" action="{% url 'edit_workout_request' form.instance.id %}">
+                    {% else %}
                     <form method="POST" action="{% url 'create_workout_request' %}">
+                    {% endif %}
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="id_date" class="form-label">Date</label>
