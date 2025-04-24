@@ -21,8 +21,49 @@ class CustomUserCreationForm(UserCreationForm):
         fields = ['email', 'username', 'profile_picture', 'password1', 'password2']
 
 def index(request):
+    # Initial filter settings
+    filter_conditions = {
+        'date__gte': timezone.now().date(),
+        'is_past': False,
+        'is_full': False
+    }
+    
+    # Apply filters based on GET parameters
+    if 'body_part' in request.GET and request.GET['body_part'] and request.GET['body_part'] != 'All':
+        # Use case-insensitive contains search for body part
+        filter_conditions['body_part__icontains'] = request.GET['body_part']
+    
+    if 'experience_level' in request.GET and request.GET['experience_level'] and request.GET['experience_level'] != 'All':
+        # Use case-insensitive contains search for experience level
+        filter_conditions['experience_level__icontains'] = request.GET['experience_level']
+    
+    if 'date' in request.GET and request.GET['date']:
+        try:
+            selected_date = datetime.strptime(request.GET['date'], '%Y-%m-%d').date()
+            # Override the default date filter
+            filter_conditions.pop('date__gte', None)
+            filter_conditions['date'] = selected_date
+        except ValueError:
+            # If date format is invalid, fall back to default filter
+            pass
+    
+    if 'search' in request.GET and request.GET['search']:
+        search_query = request.GET['search']
+        # Keep the basic filters but add Q objects for searching
+        basic_filters = filter_conditions.copy()
+        filter_conditions = {}
+        workout_requests = WorkoutRequest.objects.filter(
+            Q(**basic_filters) & 
+            (Q(body_part__icontains=search_query) | 
+             Q(experience_level__icontains=search_query) |
+             Q(description__icontains=search_query) |
+             Q(user__username__icontains=search_query))
+        ).order_by('date', 'time')
+    else:
+        # Normal filtering without search
+        workout_requests = WorkoutRequest.objects.filter(**filter_conditions).order_by('date', 'time')
+    
     if request.user.is_authenticated:
-        workout_requests = WorkoutRequest.objects.filter(date__gte=timezone.now().date(), is_past=False, is_full=False).order_by('date', 'time')
         created_workouts = WorkoutRequest.objects.filter(user=request.user).count()
         participated_workouts = WorkoutInvitation.objects.filter(receiver=request.user, status__in=['accepted', 'completed']).count()
         total_workouts = created_workouts + participated_workouts
@@ -72,7 +113,6 @@ def index(request):
             'friend_requests': friend_requests,
         }
     else:
-        workout_requests = WorkoutRequest.objects.filter(date__gte=timezone.now().date(), is_past=False, is_full=False).order_by('date', 'time')
         context = {
             'workout_requests': workout_requests,
         }
