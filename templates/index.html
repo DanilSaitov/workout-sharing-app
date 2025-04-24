@@ -62,6 +62,15 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
+        .right-bottom small {
+            color: #ffffff; /* Make text white */
+            font-size: 0.9rem; /* Slightly smaller font size for distinction */
+            font-weight: 500; /* Add weight for better visibility */
+        }
+        .right-bottom h2 {
+            font-size: 2rem; /* Ensure stat numbers remain prominent */
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -285,15 +294,15 @@
                                 <div class="row mb-3">
                                     <div class="col-4 text-center">
                                         <h2 class="mb-0">{{ total_workouts }}</h2>
-                                        <small class="text-muted">Total</small>
+                                        <small class="white">Total</small>
                                     </div>
                                     <div class="col-4 text-center">
                                         <h2 class="mb-0">{{ completed_workouts }}</h2>
-                                        <small class="text-muted">Completed</small>
+                                        <small class="white">Completed</small>
                                     </div>
                                     <div class="col-4 text-center">
                                         <h2 class="mb-0">{{ created_workouts }}</h2>
-                                        <small class="text-muted">Created</small>
+                                        <small class="white">Created</small>
                                     </div>
                                 </div>
                                 

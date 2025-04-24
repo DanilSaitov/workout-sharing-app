@@ -46,19 +46,26 @@
             border-radius: 5px;
             background-color: #23272A;
         }
-        .bio-section {
+        .bio-section, .p-3 h5, .right-top h4, .right-bottom h4 {
+            background-color: #23272A; /* Match sidebar background */
+            color: #ffffff; /* Text color for better contrast */
+            border-radius: 8px;
             padding: 15px;
             margin-bottom: 20px;
-            border-bottom: 1px solid #4A6D9A;
         }
-        .bio-text {
-            padding: 10px 0;
-            white-space: pre-line;
+        .bio-section h5, .p-3 h5, .right-top h4, .right-bottom h4 {
+            font-size: 1.25rem;
+            border-bottom: 2px solid #4A6D9A; /* Add separation */
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        .bio-text, .p-3 p, .right-top p, .right-bottom p {
+            color: #ffffff; /* Ensure all text is white */
         }
         .friend-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            gap: 15px;
+            gap: 20px; /* Increase spacing between friends */
             margin-top: 15px;
         }
         .friend-item {
@@ -66,6 +73,9 @@
             flex-direction: column;
             align-items: center;
             text-align: center;
+        }
+        .friend-item a {
+            text-decoration: none; /* Remove underline */
         }
         .friend-avatar {
             width: 60px;
@@ -80,6 +90,21 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+        .btn-primary {
+            background-color: #3488A0; /* Match primary button color */
+            border-color: #3488A0;
+        }
+        .btn-primary:hover {
+            background-color: #2C6D7E; /* Match hover color */
+        }
+        .btn-outline-secondary {
+            color: #ffffff; /* Ensure text is white */
+            border-color: #ffffff;
+        }
+        .btn-outline-secondary:hover {
+            background-color: #ffffff;
+            color: #23272A; /* Contrast text on hover */
         }
     </style>
 </head>
@@ -145,15 +170,15 @@
                         <div class="profile-stats">
                             <div class="stat-item">
                                 <div><strong>{{ workout_count|default:"0" }}</strong></div>
-                                <div class="small text-muted">Posts</div>
+                                <div class=" white small">Posts</div>
                             </div>
                             <div class="stat-item">
                                 <div><strong>{{ friends|length }}</strong></div>
-                                <div class="small text-muted">Friends</div>
+                                <div class=" white small">Friends</div>
                             </div>
                             <div class="stat-item">
                                 <div><strong>{{ profile_user.date_joined|date:"M Y" }}</strong></div>
-                                <div class="small text-muted">Joined</div>
+                                <div class=" white small">Joined</div>
                             </div>
                         </div>
                     </div>
@@ -193,7 +218,7 @@
                 </div>
                 
                 <!-- Friends Section -->
-                <div class="p-3">
+                <div class="bio-section">
                     <h5><i class="bi bi-people-fill"></i> Friends</h5>
                     <div class="friend-grid">
                         {% if friends %}
@@ -218,24 +243,25 @@
                 </div>
                 
                 <!-- Recent Activities/Posts Section -->
-                <div class="p-3">
+                <div class="bio-section">
                     <h5><i class="bi bi-activity"></i> Recent Activity</h5>
-                    <!-- This can be populated with user's recent workout requests -->
-                    {% if workout_requests %}
-                        {% for request in workout_requests %}
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <h6 class="card-title">{{ request.body_part }} Workout</h6>
-                                    <p class="card-text">
-                                        <small class="text-muted">{{ request.date }} at {{ request.time }}</small><br>
-                                        Experience level: {{ request.experience_level }}
-                                    </p>
+                    <div>
+                        {% if workout_requests %}
+                            {% for request in workout_requests %}
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ request.body_part }} Workout</h6>
+                                        <p class="card-text">
+                                            <small class="text-muted">{{ request.date }} at {{ request.time }}</small><br>
+                                            Experience level: {{ request.experience_level }}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-muted">No recent activity.</p>
-                    {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">No recent activity.</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 

@@ -29,7 +29,8 @@
             transition: background-color 0.2s;
         }
         .conversation-item:hover {
-            background-color: #f8f8f8;
+            background-color: #2C6D7E; /* Sidebar hover color */
+            color: #ffffff; /* Ensure text remains visible */
         }
         .conversation-avatar {
             width: 50px;
@@ -52,6 +53,19 @@
         }
         .conversation-info {
             flex-grow: 1;
+        }
+        .conversation-info h5 {
+            color: #ffffff; /* Lighter text color for names */
+        }
+        .btn-outline-primary {
+            color: #007bff;
+            border-color: #007bff;
+            font-size: 1.2rem; /* Larger font size */
+            padding: 10px 20px; /* Larger button size */
+        }
+        .btn-outline-primary:hover {
+            background-color: #007bff; /* Original hover background color */
+            color: #fff; /* Original hover text color */
         }
         .no-conversations {
             margin-top: 30px;

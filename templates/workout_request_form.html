@@ -7,32 +7,60 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
-        .left-column {
-            background-color: #f0f0f0;
+        body {
+            background-color: #2C2F33; /* Main Background */
+            color: #ffffff; /* Text color for better contrast */
+        }
+        .center-column {
+            background-color: #3A3D42; /* Slightly lighter background */
+            color: #ffffff; /* Text color for better contrast */
             min-height: 100vh;
-            border-right: 2px solid #ddd;
-            padding: 20px 0;
+            padding: 20px; /* Add padding for better spacing */
         }
-        .left-column ul {
-            list-style: none;
+        .right-column {
+            background-color: #23272A; /* Sidebar Background */
+            color: #ffffff; /* Text color for better contrast */
+            min-height: 100vh;
+            border-left: 2px solid #ddd;
             padding: 0;
-            margin: 0;
         }
-        .left-column li {
-            padding: 10px 20px;
-            transition: background-color 0.2s;
+        .btn-primary, .nav-link.active {
+            background-color: #3488A0; /* Primary Accent */
+            border-color: #3488A0;
         }
-        .left-column li:hover {
-            background-color: #e0e0e0;
+        .btn-primary:hover, .nav-link.active:hover {
+            background-color: #2C6D7E; /* Slightly darker shade for hover */
         }
-        .left-column a {
-            color: #333;
-            text-decoration: none;
-            display: block;
-            font-size: 1.1em;
+        .btn-primary, .btn-outline-secondary, .btn-success, .btn-warning, .btn-danger, .btn-primary:hover, .btn-outline-secondary:hover {
+            color: #ffffff !important; /* Ensure white text for all buttons */
         }
-        .left-column a:hover {
-            color: #007bff;
+        .profile-circle {
+            background-color: #007bff;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .filter-section {
+            background-color: #23272A; /* Match sidebar background */
+            color: #ffffff; /* Text color for better contrast */
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .workout-card {
+            background-color: #23272A; /* Match sidebar background */
+            color: #ffffff; /* Text color for better contrast */
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .workout-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
@@ -40,86 +68,87 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Left Column -->
-            <div class="col-2 left-column">
+            <div class="col-2">
                 {% include 'partials/sidebar.html' %}
             </div>
             
             <!-- Center Column -->
-            <div class="col-10">
-                <div class="container my-5">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <h2 class="card-title text-center mb-4">
-                                {% if editing %}
-                                Edit Workout Request
-                                {% else %}
-                                Create Workout Request
-                                {% endif %}
-                            </h2>
-                            
-                            <form method="POST" action="{% url 'create_workout_request' %}">
-                                {% csrf_token %}
-                                <div class="mb-3">
-                                    <label for="id_date" class="form-label">Date</label>
-                                    {{ form.date }}
-                                    {% if form.date.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.date.errors }}
-                                        </div>
-                                    {% endif %}
+            <div class="col-7 center-column">
+                <div class="filter-section">
+                    <h2 class="text-center mb-4">
+                        {% if editing %}
+                        Edit Workout Request
+                        {% else %}
+                        Create Workout Request
+                        {% endif %}
+                    </h2>
+                    
+                    <form method="POST" action="{% url 'create_workout_request' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="id_date" class="form-label">Date</label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.date.errors }}
                                 </div>
-                                <div class="mb-3">
-                                    <label for="id_time" class="form-label">Time</label>
-                                    {{ form.time }}
-                                    {% if form.time.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.time.errors }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                <div class="mb-3">
-                                    <label for="id_body_part" class="form-label">Body Part</label>
-                                    {{ form.body_part }}
-                                    {% if form.body_part.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.body_part.errors }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                <div class="mb-3">
-                                    <label for="id_experience_level" class="form-label">Experience Level</label>
-                                    {{ form.experience_level }}
-                                    {% if form.experience_level.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.experience_level.errors }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                <div class="mb-3">
-                                    <label for="id_max_participants" class="form-label">Maximum Participants</label>
-                                    {{ form.max_participants }}
-                                    <small class="form-text text-muted">Minimum 2 participants (including yourself)</small>
-                                    {% if form.max_participants.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.max_participants.errors }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="text-center mt-4">
-                                    <button type="submit" class="btn btn-primary">
-                                        {% if editing %}
-                                        Save Changes
-                                        {% else %}
-                                        Create Request
-                                        {% endif %}
-                                    </button>
-                                    <a href="{% url 'index' %}" class="btn btn-secondary ms-2">Cancel</a>
-                                </div>
-                            </form>
+                            {% endif %}
                         </div>
-                    </div>
+                        <div class="mb-3">
+                            <label for="id_time" class="form-label">Time</label>
+                            {{ form.time }}
+                            {% if form.time.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.time.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_body_part" class="form-label">Body Part</label>
+                            {{ form.body_part }}
+                            {% if form.body_part.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.body_part.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_experience_level" class="form-label">Experience Level</label>
+                            {{ form.experience_level }}
+                            {% if form.experience_level.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.experience_level.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_max_participants" class="form-label">Maximum Participants</label>
+                            {{ form.max_participants }}
+                            <small class="form-text text-muted">Minimum 2 participants (including yourself)</small>
+                            {% if form.max_participants.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.max_participants.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                {% if editing %}
+                                Save Changes
+                                {% else %}
+                                Create Request
+                                {% endif %}
+                            </button>
+                            <a href="{% url 'index' %}" class="btn btn-secondary ms-2">Cancel</a>
+                        </div>
+                    </form>
                 </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-3 right-column">
+                <!-- Add any additional content for the right column if needed -->
             </div>
         </div>
     </div>
