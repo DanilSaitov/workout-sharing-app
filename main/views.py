@@ -366,7 +366,7 @@ def registerPage(request):
     return render(request, 'login_register.html', {'form': form})
 
 # CRUD operations for WorkoutRequest model
-@login_required
+@login_required(login_url='login')
 @transaction.atomic
 @require_http_methods(["GET", "POST"])
 def create_workout_request(request):
