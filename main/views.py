@@ -51,14 +51,16 @@ def index(request):
         search_query = request.GET['search']
         # Keep the basic filters but add Q objects for searching
         basic_filters = filter_conditions.copy()
-        filter_conditions = {}
-        workout_requests = WorkoutRequest.objects.filter(
-            Q(**basic_filters) & 
-            (Q(body_part__icontains=search_query) | 
-             Q(experience_level__icontains=search_query) |
-             Q(description__icontains=search_query) |
-             Q(user__username__icontains=search_query))
-        ).order_by('date', 'time')
+        
+        # Create a Q object for search conditions
+        search_conditions = (
+            Q(body_part__icontains=search_query) | 
+            Q(experience_level__icontains=search_query) |
+            Q(user__username__icontains=search_query)
+        )
+        
+        # Apply both basic filters and search conditions
+        workout_requests = WorkoutRequest.objects.filter(**basic_filters).filter(search_conditions).order_by('date', 'time')
     else:
         # Normal filtering without search
         workout_requests = WorkoutRequest.objects.filter(**filter_conditions).order_by('date', 'time')
@@ -366,7 +368,7 @@ def registerPage(request):
     return render(request, 'login_register.html', {'form': form})
 
 # CRUD operations for WorkoutRequest model
-@login_required
+@login_required(login_url='login')
 @transaction.atomic
 @require_http_methods(["GET", "POST"])
 def create_workout_request(request):
