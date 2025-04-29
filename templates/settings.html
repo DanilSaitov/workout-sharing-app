@@ -168,30 +168,30 @@
     <!-- Password Change Modal -->
     <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
+            <div class="modal-content" style="background-color: #3A3D42; color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); border: 1px solid #ffffff;"> <!-- White border -->
+                <div class="modal-header" style="border-bottom: 1px solid #ffffff;"> <!-- White border -->
                     <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-outline-secondary" data-bs-dismiss="modal" aria-label="Close" style="color: #ffffff;"></button>
                 </div>
                 <form method="POST" action="{% url 'settings' %}">
                     {% csrf_token %}
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="old_password" class="form-label">Current Password</label>
-                            <input type="password" class="form-control" id="old_password" name="old_password" required>
+                            <input type="password" class="form-control" id="old_password" name="old_password" required style="background-color: #23272A; color: #ffffff; border: 1px solid #4A6D9A;">
                         </div>
                         <div class="mb-3">
                             <label for="new_password1" class="form-label">New Password</label>
-                            <input type="password" class="form-control" id="new_password1" name="new_password1" required>
+                            <input type="password" class="form-control" id="new_password1" name="new_password1" required style="background-color: #23272A; color: #ffffff; border: 1px solid #4A6D9A;">
                         </div>
                         <div class="mb-3">
                             <label for="new_password2" class="form-label">Confirm New Password</label>
-                            <input type="password" class="form-control" id="new_password2" name="new_password2" required>
+                            <input type="password" class="form-control" id="new_password2" name="new_password2" required style="background-color: #23272A; color: #ffffff; border: 1px solid #4A6D9A;">
                         </div>
                         <input type="hidden" name="password" value="change">
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <div class="modal-footer" style="border-top: 1px solid #ffffff;"> <!-- White border -->
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" style="color: #ffffff; border-color: #ffffff;">Cancel</button> <!-- White text -->
                         <button type="submit" class="btn btn-primary">Change Password</button>
                     </div>
                 </form>
